@@ -1,0 +1,14 @@
+package com.codewithdondamzy.onlinestore.Dtos.Request;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+@Data
+@AllArgsConstructor
+public class AddressRequest {
+    private String street;
+    private String city;
+    private String state;
+    private String zipCode;
+    private String country;
+}
