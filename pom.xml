@@ -69,7 +69,7 @@
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-jackson</artifactId> <!-- or jjwt-gson if Gson is preferred -->
+            <artifactId>jjwt-jackson</artifactId> <!-- or jjwt-Json if Json is preferred -->
             <version>0.13.0</version>
             <scope>runtime</scope>
         </dependency>
@@ -91,6 +91,9 @@
                             <artifactId>lombok</artifactId>
                         </path>
                     </annotationProcessorPaths>
+                    <source>24</source>
+                    <target>24</target>
+                    <compilerArgs>--enable-preview</compilerArgs>
                 </configuration>
             </plugin>
             <plugin>

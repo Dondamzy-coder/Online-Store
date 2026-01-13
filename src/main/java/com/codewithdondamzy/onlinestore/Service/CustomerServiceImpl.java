@@ -1,5 +1,7 @@
 package com.codewithdondamzy.onlinestore.Service;
 
+import com.codewithdondamzy.onlinestore.Dtos.Request.AddressRequest;
+import com.codewithdondamzy.onlinestore.Dtos.Request.ChangePasswordRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Request.CreateCustomerLoginRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Request.CreateCustomerRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Response.CreateCustomerResponse;
@@ -8,14 +10,18 @@ import com.codewithdondamzy.onlinestore.Dtos.Response.GetCustomerResponse;
 import com.codewithdondamzy.onlinestore.Dtos.Response.UpdateCustomerResponse;
 import com.codewithdondamzy.onlinestore.Models.*;
 import com.codewithdondamzy.onlinestore.Repository.*;
+import com.codewithdondamzy.onlinestore.jwt.JwtUtils;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.*;
+
 @Service
 public class CustomerServiceImpl implements CustomerService {
     private final CustomerRepository customerRepository;
@@ -24,14 +30,24 @@ public class CustomerServiceImpl implements CustomerService {
     private final ProductRepository productRepository;
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
+    private final OrderRepository orderRepository;
+    private final ReviewRepository reviewRepository;
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtils jwtUtils;
 
-    public CustomerServiceImpl(CustomerRepository customerRepository, PasswordEncoder passwordEncoder, AddressRepository addressRepository, ProductRepository productRepository, CartRepository cartRepository, CartItemRepository cartItemRepository){
+    public CustomerServiceImpl(CustomerRepository customerRepository, PasswordEncoder passwordEncoder,
+                               AddressRepository addressRepository, ProductRepository productRepository,
+                               CartRepository cartRepository, CartItemRepository cartItemRepository, OrderRepository orderRepository, ReviewRepository reviewRepository, AuthenticationManager authenticationManager, JwtUtils jwtUtils) {
         this.customerRepository = customerRepository;
         this.passwordEncoder = passwordEncoder;
         this.addressRepository = addressRepository;
         this.productRepository = productRepository;
         this.cartRepository = cartRepository;
         this.cartItemRepository = cartItemRepository;
+        this.orderRepository = orderRepository;
+        this.reviewRepository = reviewRepository;
+        this.authenticationManager = authenticationManager;
+        this.jwtUtils = jwtUtils;
     }
 
 
@@ -40,7 +56,7 @@ public class CustomerServiceImpl implements CustomerService {
         CreateCustomerResponse creatCustomerResponse = new CreateCustomerResponse();
         try {
             Optional<Customer> newCustomer = customerRepository.findCustomerByEmail(createCustomerRequest.getEmail());
-            if(newCustomer.isPresent()){
+            if (newCustomer.isPresent()) {
                 creatCustomerResponse.setStatusCode(400);
                 creatCustomerResponse.setMessage("Customer already exists");
                 return creatCustomerResponse;
@@ -48,20 +64,41 @@ public class CustomerServiceImpl implements CustomerService {
             Customer customer = Customer.builder()
                     .name(createCustomerRequest.getName())
                     .email(createCustomerRequest.getEmail())
-                    .addresses(createCustomerRequest.getAddress())
                     .userName(createCustomerRequest.getUserName())
+                    .password(createCustomerRequest.getPassword())
+                    .createdAt(LocalDate.now())
+                    .role(Role.CUSTOMER)
                     .UUID(UUID.randomUUID().toString())
                     .build();
-//            customer.setName(createCustomerRequest.getName());
-//            customer.setEmail(createCustomerRequest.getEmail());
-//            customer.setAddress(createCustomerRequest.getAddress());
-//            customer.setUserName(createCustomerRequest.getUserName());
-//            customer.setUUID(UUID.randomUUID().toString());
+            // Create cart
+            Cart cart = Cart.builder()
+                    .cartItem(new ArrayList<>())
+                    .totalPrice(BigDecimal.ZERO)
+                    .customer(customer)
+                    .build();
+            customer.setCart(cart);
+
+            List<Address> addresses = new ArrayList<>();
+            for(AddressRequest addressRequest : createCustomerRequest.getAddress()) {
+                Address address = Address.builder()
+                        .city(addressRequest.getCity())
+                        .country(addressRequest.getCountry())
+                        .street(addressRequest.getStreet())
+                        .zipCode(addressRequest.getZipCode())
+                        .customer(customer)
+                        .build();
+                addresses.add(address);
+            }
+            customer.setAddresses(addresses);
+            // Initialize empty orders
+            customer.setOrders(new ArrayList<>());
             customerRepository.save(customer);
             creatCustomerResponse.setStatusCode(200);
             creatCustomerResponse.setMessage("Customer created successfully!!");
+
             return creatCustomerResponse;
         } catch (Exception e) {
+            e.printStackTrace();
             creatCustomerResponse.setStatusCode(500);
             creatCustomerResponse.setMessage("Internal Server Error,please try again later!!");
         }
@@ -72,18 +109,23 @@ public class CustomerServiceImpl implements CustomerService {
     public CreateCustomerResponse customerLogin(CreateCustomerLoginRequest createCustomerLoginRequest) {
         CreateCustomerResponse createCustomerResponse = new CreateCustomerResponse();
         try {
-            Optional<Customer> existingCustomer = customerRepository.findCustomerByEmail(createCustomerLoginRequest.getEmailAddress());
-            if(existingCustomer.isPresent()) {
-                throw new IllegalArgumentException("Customer with email:"
-                        + createCustomerLoginRequest.getEmailAddress() + "already exists!");
+            Customer existingCustomer = customerRepository.findByUserName(createCustomerLoginRequest.getUserName());
+            if(existingCustomer == null) {
+                createCustomerResponse.setStatusCode(401);
+                createCustomerResponse.setMessage("Customer with username " + createCustomerLoginRequest.getUserName() + " not found");
+                return createCustomerResponse;
             }
-            Customer customerToLogin = existingCustomer.get();
-            if(!createCustomerLoginRequest.getUserName().equals(customerToLogin.getUserName())) {
-                throw new IllegalArgumentException("Invalid username for email" + createCustomerLoginRequest.getEmailAddress());
-            }
+            // 🔐 Authenticate credentials using Spring Security
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            createCustomerLoginRequest.getUserName(),
+                            createCustomerLoginRequest.getPassword()
+                    )
+            );
+            String jwtToken = jwtUtils.generateJwtToken(new UserPrincipal(existingCustomer));
+            createCustomerResponse.setJwtToken(jwtToken);
             createCustomerResponse.setStatusCode(200);
             createCustomerResponse.setMessage("Customer login successfully!!");
-            createCustomerResponse.setCustomer(customerToLogin);
             return createCustomerResponse;
         } catch (IllegalArgumentException e) {
             createCustomerResponse.setStatusCode(500);
@@ -93,34 +135,35 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public UpdateCustomerResponse changePassword(String oldPassword, String newPassword, Authentication authentication) {
+    public UpdateCustomerResponse changePassword(ChangePasswordRequest changePasswordRequest, Authentication authentication) {
         UpdateCustomerResponse updateCustomerResponse = new UpdateCustomerResponse();
-        String emailAddress = authentication.getName();
+        String userName = authentication.getName();
         try {
-            Optional<Customer> customer = customerRepository.findCustomerByEmail(emailAddress);
-            if(customer.isEmpty()) {
-                updateCustomerResponse.setStatusCode(400);
+            Optional<Customer> customer = Optional.ofNullable(customerRepository.findByUserName(userName));
+            if (customer.isEmpty()) {
+                updateCustomerResponse.setStatusCode(402);
                 updateCustomerResponse.setMessage("Customer not found!");
                 return updateCustomerResponse;
             }
             Customer existingCustomer = customer.get();
-            if(!passwordEncoder.matches(oldPassword,existingCustomer.getPassword())) {
-                updateCustomerResponse.setStatusCode(400);
+            if (!passwordEncoder.matches(changePasswordRequest.getOldPassword(), existingCustomer.getPassword())) {
+                updateCustomerResponse.setStatusCode(403);
                 updateCustomerResponse.setMessage("Old password doesn't match!");
                 return updateCustomerResponse;
             }
-            if(passwordEncoder.matches(newPassword,existingCustomer.getPassword())) {
-                updateCustomerResponse.setStatusCode(400);
+            if (passwordEncoder.matches(changePasswordRequest.getNewPassword(), existingCustomer.getPassword())) {
+                updateCustomerResponse.setStatusCode(401);
                 updateCustomerResponse.setMessage("New password must be different from the old password!");
                 return updateCustomerResponse;
             }
-
-            existingCustomer.setPassword(passwordEncoder.encode(newPassword));
+            existingCustomer.setPassword(passwordEncoder.encode(changePasswordRequest.getNewPassword()));
             customerRepository.save(existingCustomer);
             updateCustomerResponse.setStatusCode(200);
             updateCustomerResponse.setMessage("Customer password updated successfully!!");
+            updateCustomerResponse.setData(customer);
             return updateCustomerResponse;
         } catch (Exception e) {
+            e.printStackTrace();
             updateCustomerResponse.setStatusCode(500);
             updateCustomerResponse.setMessage("Unexpected error occurred!!");
             return updateCustomerResponse;
@@ -128,7 +171,7 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public UpdateCustomerResponse setAddressAsDefault(Long addressId,Authentication authentication) {
+    public UpdateCustomerResponse setAddressAsDefault(Long addressId, Authentication authentication) {
         UpdateCustomerResponse updateCustomerResponse = new UpdateCustomerResponse();
         String emailAddress = authentication.getName();
         try {
@@ -188,7 +231,7 @@ public class CustomerServiceImpl implements CustomerService {
             cartItem.setProduct(productToAdd);
             cartItem.setQuantity(quantity);
             cartItem.setCart(cartToAdd);
-            cartItem.setTotalPrice();
+            cartItem.calculateTotalPrice();
             cartItemRepository.save(cartItem);
             cartRepository.save(cartToAdd);
             updateCustomerResponse.setStatusCode(200);
@@ -206,7 +249,7 @@ public class CustomerServiceImpl implements CustomerService {
         GetCustomerResponse getCustomerResponse = new GetCustomerResponse();
         try {
             List<Customer> customerList = customerRepository.findAll();
-            if(customerList.isEmpty()) {
+            if (customerList.isEmpty()) {
                 getCustomerResponse.setStatusCode(400);
                 getCustomerResponse.setMessage("No customer found!!");
                 return getCustomerResponse;
@@ -224,9 +267,10 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public GetCustomerResponse getCustomerByEmailAddress(String emailAddress) {
+    public GetCustomerResponse getCustomerByEmailAddress(Authentication authentication) {
         GetCustomerResponse getCustomerResponse = new GetCustomerResponse();
         try {
+            String emailAddress = authentication.getName();
             Optional<Customer> customerToFind = customerRepository.findCustomerByEmail(emailAddress);
             if (customerToFind.isEmpty()) {
                 getCustomerResponse.setStatusCode(400);
@@ -246,24 +290,26 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public UpdateCustomerResponse updateCustomer(CreateCustomerRequest createCustomerRequest,String emailAddress) {
+    public UpdateCustomerResponse updateCustomer(CreateCustomerRequest createCustomerRequest, Authentication authentication) {
         UpdateCustomerResponse updateCustomerResponse = new UpdateCustomerResponse();
         try {
+            String emailAddress = authentication.getName();
+            ;
             Optional<Customer> customer = customerRepository.findCustomerByEmail(emailAddress);
-            if(customer.isEmpty()) {
+            if (customer.isEmpty()) {
                 updateCustomerResponse.setStatusCode(400);
                 updateCustomerResponse.setMessage("Customer not found");
                 return updateCustomerResponse;
             }
-           Customer customerToUpdate = Customer.builder()
-                   .name(createCustomerRequest.getName())
-                   .role(Role.ADMIN)
-                   .userName(createCustomerRequest.getUserName())
-                   .UUID(UUID.randomUUID().toString())
-                   .password(passwordEncoder.encode(customer.get().getPassword()))
-                   .review(customer.get().getReview())
-                   .email(createCustomerRequest.getEmail())
-                   .build();
+            Customer customerToUpdate = Customer.builder()
+                    .name(createCustomerRequest.getName())
+                    .role(Role.ADMIN)
+                    .userName(createCustomerRequest.getUserName())
+                    .UUID(UUID.randomUUID().toString())
+                    .password(passwordEncoder.encode(customer.get().getPassword()))
+                    .review(customer.get().getReview())
+                    .email(createCustomerRequest.getEmail())
+                    .build();
             customerRepository.save(customerToUpdate);
             updateCustomerResponse.setStatusCode(200);
             updateCustomerResponse.setMessage("Customer updated successfully!!");
@@ -280,13 +326,15 @@ public class CustomerServiceImpl implements CustomerService {
         DeleteCustomerResponse deleteCustomerResponse = new DeleteCustomerResponse();
         try {
             Optional<Customer> customer = customerRepository.findById(id);
-            if(customer.isEmpty()) {
+            if (customer.isEmpty()) {
                 deleteCustomerResponse.setStatusCode(400);
                 deleteCustomerResponse.setMessage("No customer found!!");
                 return deleteCustomerResponse;
             }
             Customer customerToDelete = customer.get();
             customerRepository.delete(customerToDelete);
+            deleteCustomerResponse.setStatusCode(200);
+            deleteCustomerResponse.setMessage("Customer deleted successfully!!");
             return deleteCustomerResponse;
         } catch (Exception e) {
             deleteCustomerResponse.setStatusCode(404);
@@ -297,11 +345,105 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public GetCustomerResponse getAllOrders() {
-        return null;
+        GetCustomerResponse getCustomerResponse = new GetCustomerResponse();
+        List<Order> orderList = orderRepository.findAll();
+        if (orderList.isEmpty()) {
+            getCustomerResponse.setStatusCode(400);
+            getCustomerResponse.setMessage("No orders found!");
+            return getCustomerResponse;
+        }
+        List<Order> allOrders = new ArrayList<>(orderList);
+        getCustomerResponse.setStatusCode(200);
+        getCustomerResponse.setMessage("Orders found successfully");
+        getCustomerResponse.setData(allOrders);
+        return getCustomerResponse;
     }
 
     @Override
-    public UpdateCustomerResponse addReview(Long productId) {
-        return null;
+    public UpdateCustomerResponse addReview(Long reviewId, Long productId) {
+        UpdateCustomerResponse updateCustomerResponse = new UpdateCustomerResponse();
+        try {
+            Optional<Products> products = productRepository.findProductsById(productId);
+            List<Review> reviews = reviewRepository.findByProductId(productId);
+            if (products.isEmpty()) {
+                updateCustomerResponse.setStatusCode(400);
+                updateCustomerResponse.setMessage("No product found!");
+                return updateCustomerResponse;
+            }
+            if (reviews.isEmpty()) {
+                updateCustomerResponse.setStatusCode(400);
+                updateCustomerResponse.setMessage("No review found!");
+                return updateCustomerResponse;
+            }
+            List<Review> allReviews = new ArrayList<>(reviews);
+            allReviews.addAll(reviews);
+            Products productToReview = products.get();
+            productToReview.setReviews(reviews);
+            updateCustomerResponse.setStatusCode(200);
+            updateCustomerResponse.setMessage("Review added to product successfully");
+            updateCustomerResponse.setData(productToReview);
+            return updateCustomerResponse;
+        } catch (Exception e) {
+            updateCustomerResponse.setStatusCode(500);
+            updateCustomerResponse.setMessage("Error adding review");
+            return updateCustomerResponse;
+        }
+    }
+
+    @Override
+    public UpdateCustomerResponse updateReview(Long productId) {
+        UpdateCustomerResponse updateCustomerResponse = new UpdateCustomerResponse();
+        try {
+            Optional<Products> products = productRepository.findProductsById(productId);
+            if (products.isEmpty()) {
+                updateCustomerResponse.setStatusCode(400);
+                updateCustomerResponse.setMessage("No product found!");
+                return updateCustomerResponse;
+            }
+            Products productToUpdate = products.get();
+            productToUpdate.setReviews(reviewRepository.findByProductId(productId));
+            updateCustomerResponse.setStatusCode(200);
+            updateCustomerResponse.setMessage("Product Review updated successfully");
+            return updateCustomerResponse;
+        } catch (Exception e) {
+            updateCustomerResponse.setStatusCode(500);
+            updateCustomerResponse.setMessage("Error updating product review");
+            return updateCustomerResponse;
+        }
+    }
+
+    @Override
+    public UpdateCustomerResponse manageCustomer(String emailAddress, Authentication authentication) {
+        UpdateCustomerResponse updateCustomerResponse = new UpdateCustomerResponse();
+        String userName = authentication.getName();
+        try {
+            Optional<Customer> customer = customerRepository.findCustomerByEmail(emailAddress);
+            if (customer.isEmpty()) {
+                updateCustomerResponse.setStatusCode(400);
+                updateCustomerResponse.setMessage("No customer found!");
+                return updateCustomerResponse;
+            }
+            if (customer.get().getUserName().equals(userName)) {
+                updateCustomerResponse.setStatusCode(402);
+                updateCustomerResponse.setMessage("Sorry you cannot manage urself!!");
+                return updateCustomerResponse;
+            }
+            Customer customerToManage = customer.get();
+            if (!customerToManage.getRole().equals(Role.ADMIN) && !customerToManage.getRole().equals(Role.CUSTOMER)) {
+                updateCustomerResponse.setStatusCode(401);
+                updateCustomerResponse.setMessage("This user is a new guest to the store");
+                return updateCustomerResponse;
+            }
+            customerToManage.setRole(Role.GUEST);
+            customerRepository.save(customerToManage);
+            updateCustomerResponse.setStatusCode(200);
+            updateCustomerResponse.setMessage("Customer managed successfully");
+            updateCustomerResponse.setData(customerToManage);
+            return updateCustomerResponse;
+        } catch (Exception e) {
+            updateCustomerResponse.setStatusCode(500);
+            updateCustomerResponse.setMessage("There was a problem managing customer,please try again later");
+            return updateCustomerResponse;
+        }
     }
 }

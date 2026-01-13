@@ -22,7 +22,7 @@ public interface AdminService {
 
     AdminResponse deactivateCategory(Long id);
 
-    AdminResponse updateProduct(Long id, CreateProductRequest createProductRequest,int quantity);
+    AdminResponse updateProduct(Long productId,Long categoryId,CreateProductRequest createProductRequest,int quantity);
 
     AdminResponse deleteProduct(Long id);
 

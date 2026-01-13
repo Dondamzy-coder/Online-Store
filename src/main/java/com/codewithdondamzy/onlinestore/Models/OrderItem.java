@@ -16,7 +16,7 @@ import java.math.BigDecimal;
 public class OrderItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long orderId;
+    private Long id;
     private int quantity;
     private BigDecimal price;
     @ManyToOne

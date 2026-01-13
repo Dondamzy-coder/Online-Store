@@ -37,7 +37,7 @@ public class AdminController {
        return ResponseEntity.ok(adminService.getAllAdmins());
     }
 
-    @DeleteMapping("/deleteAdminByUserName{userName}")
+    @DeleteMapping("/deleteAdminByUserName")
     public ResponseEntity<?> deleteAdmin(@RequestParam String userName) {
         return ResponseEntity.ok(adminService.deleteAdminByUserName(userName));
     }

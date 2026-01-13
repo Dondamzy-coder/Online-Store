@@ -13,7 +13,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     Long id(Long id);
 
-    Optional<Order> findOrderByOrderDate(LocalDate orderDate);
+    Optional<Order> findOrderByDateCreated(LocalDate dateCreated);
 
     List<Order> findOrderByCustomerId(Long userId);
 }

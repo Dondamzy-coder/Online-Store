@@ -115,6 +115,7 @@ public class AdminServiceImpl implements AdminService {
     public AdminResponse updateCategory(Long id, CreateCategoryRequest createCategoryRequest) {
         AdminResponse adminResponse = new AdminResponse();
         try {
+
             Optional<Category> category = categoryRepository.findById(id);
             if(category.isEmpty()) {
                 adminResponse.setStatusCode(404);
@@ -123,7 +124,6 @@ public class AdminServiceImpl implements AdminService {
             }
             Category categoryToUpdate = category.get();
             categoryToUpdate.setName(createCategoryRequest.getName());
-            categoryToUpdate.setProductsList(createCategoryRequest.getProductsList());
             categoryRepository.save(categoryToUpdate);
             adminResponse.setStatusCode(200);
             adminResponse.setMessage("Category with id " + id + " updated successfully");
@@ -181,13 +181,19 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public AdminResponse updateProduct(Long id, CreateProductRequest createProductRequest,int quantity) {
+    public AdminResponse updateProduct(Long productId,Long categoryId, CreateProductRequest createProductRequest,int quantity) {
         AdminResponse adminResponse = new AdminResponse();
         try {
-            Optional<Products> product = productRepository.findProductsById(id);
+            Optional<Category> category = categoryRepository.findById(categoryId);
+            Optional<Products> product = productRepository.findProductsById(productId);
             if(product.isEmpty()) {
                 adminResponse.setStatusCode(404);
-                adminResponse.setMessage("Product with id " + id + " not found, Cannot be updated");
+                adminResponse.setMessage("Product with id " + productId + " not found, Cannot be updated");
+                return adminResponse;
+            }
+            if(category.isEmpty()) {
+                adminResponse.setStatusCode(402);
+                adminResponse.setMessage("Category not found,product cannot be updated");
                 return adminResponse;
             }
             if(product.get().getInventory() < 0) {
@@ -195,11 +201,12 @@ public class AdminServiceImpl implements AdminService {
                 adminResponse.setMessage("Product inventory is negative");
                 return adminResponse;
             }
+            Category categoryToUpdate = category.get();
             Products productToUpdate = product.get();
             productToUpdate.setInventory(createProductRequest.getStockQuantity() + quantity);
             productToUpdate.setPrice(createProductRequest.getPrice());
             productToUpdate.setDescription(createProductRequest.getDescription());
-            productToUpdate.setCategory(createProductRequest.getCategory());
+            productToUpdate.setCategory(categoryToUpdate);
             productRepository.save(productToUpdate);
             adminResponse.setStatusCode(200);
             adminResponse.setMessage("Product updated successfully");

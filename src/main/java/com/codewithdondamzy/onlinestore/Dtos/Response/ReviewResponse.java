@@ -1,12 +1,10 @@
 package com.codewithdondamzy.onlinestore.Dtos.Response;
 
-import com.codewithdondamzy.onlinestore.Models.Customer;
 import lombok.Data;
 
 @Data
-public class GetCustomerResponse {
+public class ReviewResponse {
     private int statusCode;
     private String message;
-    private Customer customer;
     private Object data;
 }

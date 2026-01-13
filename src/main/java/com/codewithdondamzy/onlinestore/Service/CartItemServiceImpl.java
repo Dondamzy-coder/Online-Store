@@ -61,7 +61,8 @@ public class CartItemServiceImpl implements CartItemService{
             }
 
         }
-        cartItem.setTotalPrice();
+        assert cartItem != null;
+        cartItem.calculateTotalPrice();
         cartItem.setQuantity(quantity);
         cartItem.setCart(newCart);
         cartItemResponse.setStatusCode(200);

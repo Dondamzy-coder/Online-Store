@@ -8,11 +8,14 @@ import java.util.List;
 @Data
 public class CreateCustomerRequest {
     private String name;
-    private List<Address> address;
+    private List<AddressRequest> address;
     private String email;
     private String userName;
+    private List<OrderRequest> orderRequests;
+    private String password;
+    private CartRequest cartRequest;
 
     public static boolean isValidPassword(String password) {
-        return false;
+        return true;
     }
 }

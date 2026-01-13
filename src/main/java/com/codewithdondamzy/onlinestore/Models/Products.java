@@ -24,16 +24,14 @@ public class Products {
     private String description;
     private int inventory;
     private boolean isAvailable;
-    @ManyToOne
-    @JoinColumn(name = "customer_id")
-    private Customer customer;
+
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Image> imageList;
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Review> review;
+    private List<Review> reviews;
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CartItem> cartItem;
 }

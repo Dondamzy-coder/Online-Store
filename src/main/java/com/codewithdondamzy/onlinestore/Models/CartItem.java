@@ -24,13 +24,14 @@ public class CartItem {
 
     @JsonIgnore
     @ManyToOne
-    @JoinColumn(name = "cart_id")
+    @JoinColumn(name = "cart_id", nullable = false)
     private Cart cart;
+
     @ManyToOne
-    @JoinColumn(name = "product_id")
+    @JoinColumn(name = "product_id",nullable = false)
     private Products product;
 
-    public void setTotalPrice() {
+    public void calculateTotalPrice() {
         this.totalPrice = this.unitPrice.multiply(BigDecimal.valueOf(quantity));
     }
 }

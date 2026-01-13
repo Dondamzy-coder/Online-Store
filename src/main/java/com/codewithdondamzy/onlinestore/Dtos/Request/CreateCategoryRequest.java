@@ -8,5 +8,5 @@ import java.util.List;
 @Data
 public class CreateCategoryRequest {
     private String name;
-    private List<Products> productsList;
+    private List<CreateProductRequest> productsList;
 }

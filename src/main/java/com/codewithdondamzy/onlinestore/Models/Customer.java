@@ -26,22 +26,23 @@ public class Customer {
     @OneToMany(mappedBy = "customer",cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Address> addresses = new ArrayList<>();
 
-    @OneToOne(mappedBy = "customer",cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
     private Cart cart;
+
     private String email;
     private String password;
     private String userName;
     private String UUID;
-
+    private String phoneNumber;
     @OneToMany(mappedBy = "customer",cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Order> orders;
 
-    @OneToOne
-    private Order order;
     @OneToMany(mappedBy = "customer",cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Review> review;
     private boolean isActive;
     private LocalDate createdAt;
+
+    @Enumerated(EnumType.STRING)
     private Role role;
 
     public String getPassword() {

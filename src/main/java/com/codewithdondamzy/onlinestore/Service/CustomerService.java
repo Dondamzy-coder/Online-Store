@@ -1,5 +1,6 @@
 package com.codewithdondamzy.onlinestore.Service;
 
+import com.codewithdondamzy.onlinestore.Dtos.Request.ChangePasswordRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Request.CreateCustomerLoginRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Request.CreateCustomerRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Response.CreateCustomerResponse;
@@ -15,7 +16,7 @@ public interface CustomerService {
 
     CreateCustomerResponse customerLogin(CreateCustomerLoginRequest createCustomerLoginRequest);
 
-    UpdateCustomerResponse changePassword(String oldPassword, String newPassword, Authentication authentication);
+    UpdateCustomerResponse changePassword(ChangePasswordRequest changePasswordRequest,Authentication authentication);
 
     UpdateCustomerResponse setAddressAsDefault(Long addressId,Authentication authentication);
 
@@ -23,14 +24,18 @@ public interface CustomerService {
 
     GetCustomerResponse getAllCustomers();
 
-    GetCustomerResponse getCustomerByEmailAddress(String emailAddress);
+    GetCustomerResponse getCustomerByEmailAddress(Authentication authentication);
 
-    UpdateCustomerResponse updateCustomer(CreateCustomerRequest createCustomerRequest,String emailAddress);
+    UpdateCustomerResponse updateCustomer(CreateCustomerRequest createCustomerRequest,Authentication authentication);
 
     DeleteCustomerResponse deleteCustomer(Long id);
 
     GetCustomerResponse getAllOrders();
 
-    UpdateCustomerResponse addReview(Long productId);
+    UpdateCustomerResponse addReview(Long reviewId,Long productId);
+
+    UpdateCustomerResponse updateReview(Long productId);
+
+    UpdateCustomerResponse manageCustomer(String emailAddress, Authentication authentication);
 
 }

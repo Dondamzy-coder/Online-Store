@@ -4,6 +4,7 @@ import com.codewithdondamzy.onlinestore.Models.Category;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 public class CreateProductRequest {
@@ -11,5 +12,6 @@ public class CreateProductRequest {
     private BigDecimal price;
     private String description;
     private int stockQuantity;
-    private Category category;
+    private CreateCategoryRequest category;
+    private List<CreateImageRequest> imageRequestList;
 }

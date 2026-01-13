@@ -8,6 +8,6 @@ import java.math.BigDecimal;
 public class CartItemRequest {
     private int quantity;
     private BigDecimal price;
-    private String productId;
-    private Long cartId;
+    private CreateProductRequest product;
+    private CartRequest cart;
 }

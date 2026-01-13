@@ -1,5 +1,6 @@
 package com.codewithdondamzy.onlinestore.Controller;
 
+import com.codewithdondamzy.onlinestore.Dtos.Request.ChangePasswordRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Request.CreateCustomerLoginRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Request.CreateCustomerRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Response.CreateCustomerResponse;
@@ -28,11 +29,12 @@ import java.util.Map;
 public class CustomerController {
     private final CustomerService customerService;
     private final JwtUtils jwtUtils;
-    private AuthenticationManager authenticationManager;
+    private final AuthenticationManager authenticationManager;
 
-    public CustomerController(CustomerService customerService, JwtUtils jwtUtils) {
+    public CustomerController(CustomerService customerService, JwtUtils jwtUtils, AuthenticationManager authenticationManager) {
         this.customerService = customerService;
         this.jwtUtils = jwtUtils;
+        this.authenticationManager = authenticationManager;
     }
     @PostMapping("/createCustomer")
     public ResponseEntity<?> createCustomer(@RequestBody CreateCustomerRequest createCustomerRequest) {
@@ -41,30 +43,12 @@ public class CustomerController {
 
     @PostMapping("/customerLogin")
     public ResponseEntity<?> customerLogin(@RequestBody CreateCustomerLoginRequest createCustomerLoginRequest) {
-        Authentication authentication;
-        try{
-            authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                    createCustomerLoginRequest.getUserName(),createCustomerLoginRequest.getPassword()));
-        } catch (AuthenticationException e) {
-            Map<String, Object> body = new HashMap<>();
-            body.put("message", "Bad credentials");
-            body.put("Status", false);
-            return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
-        }
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-
-        String jwtToken = jwtUtils.generateTokenFromUserName(userDetails);
-
-        CreateCustomerResponse response = new CreateCustomerResponse();
         return ResponseEntity.ok(customerService.customerLogin(createCustomerLoginRequest));
     }
 
     @PutMapping("/changeCustomerPassword")
-    public ResponseEntity<?> changePassword(@RequestParam String oldPassword,
-                                            @RequestParam String newPassword,Authentication authentication) {
-       UpdateCustomerResponse customer = customerService.changePassword(oldPassword,newPassword,authentication);
+    public ResponseEntity<?> changePassword(@RequestBody ChangePasswordRequest changePasswordRequest, Authentication authentication) {
+       UpdateCustomerResponse customer = customerService.changePassword(changePasswordRequest,authentication);
        return ResponseEntity.ok(customer);
     }
 
@@ -86,16 +70,16 @@ public class CustomerController {
     }
 
     @GetMapping("/getCustomerByEmail")
-    public ResponseEntity<?> getCustomerByEmail(@RequestParam String emailAddress) {
-        return ResponseEntity.ok(customerService.getCustomerByEmailAddress(emailAddress));
+    public ResponseEntity<?> getCustomerByEmail(Authentication authentication) {
+        return ResponseEntity.ok(customerService.getCustomerByEmailAddress(authentication));
     }
-    @PutMapping("/updateCustomerByEmail}")
+    @PutMapping("/updateCustomerByEmail")
     public ResponseEntity<?> updateCustomerById(@RequestBody CreateCustomerRequest createCustomerRequest,
-                                                @RequestParam String emailAddress) {
-        return ResponseEntity.ok(customerService.updateCustomer(createCustomerRequest,emailAddress));
+                                                 Authentication authentication) {
+        return ResponseEntity.ok(customerService.updateCustomer(createCustomerRequest,authentication));
     }
 
-    @DeleteMapping("/DeleteCustomerById{id}")
+    @DeleteMapping("/deleteCustomerById/{id}")
     public ResponseEntity<?> deleteCustomerById(@PathVariable Long id) {
         return ResponseEntity.ok(customerService.deleteCustomer(id));
     }
@@ -106,9 +90,9 @@ public class CustomerController {
         return ResponseEntity.ok(allOrders);
     }
 
-    @PutMapping("/addReview/{productId}")
-    public ResponseEntity<?> addReview(@PathVariable Long productId) {
-        UpdateCustomerResponse review = customerService.addReview(productId);
+    @PutMapping("/addReview/{reviewId}/{productId}")
+    public ResponseEntity<?> addReview(@PathVariable Long reviewId,@PathVariable Long productId) {
+        UpdateCustomerResponse review = customerService.addReview(reviewId,productId);
         return ResponseEntity.ok(review);
     }
 }

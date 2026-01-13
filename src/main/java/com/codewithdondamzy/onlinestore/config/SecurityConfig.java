@@ -1,8 +1,8 @@
 package com.codewithdondamzy.onlinestore.config;
 
-import com.codewithdondamzy.onlinestore.jwt.AuthEntyPointJwt;
+import com.codewithdondamzy.onlinestore.Service.CustomUserDetailsService;
 import com.codewithdondamzy.onlinestore.jwt.AuthTokenFilter;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -12,89 +12,68 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import javax.sql.DataSource;
-
 @EnableWebSecurity
+@RequiredArgsConstructor
 @Configuration
 @EnableMethodSecurity
-@AllArgsConstructor
 public class SecurityConfig {
 
-    DataSource dataSource;
+    private final CustomUserDetailsService customUserDetailsService; // to load user information
 
-    private final UserDetailsService userDetailsService;
-
-    private AuthEntyPointJwt unauthorizedHandler;
+    private final AuthTokenFilter authTokenFilter;
 
     @Bean
-    public AuthTokenFilter authenticationJwtFilter() {
-        return  new AuthTokenFilter();
-    }
-    @Bean
-    public SecurityFilterChain SecurityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .authorizeHttpRequests((requests) ->
-//                        ((AuthorizeHttpRequestsConfigurer.AuthorizedUrl)
-                        requests.requestMatchers("/h2-console/**").permitAll()
-                                .requestMatchers("/customerLogin").permitAll()
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(authorizeRequests ->
+                        authorizeRequests
+                                .requestMatchers(
+                                        "/OnlineStore/createCategory",
+                                        "/OnlineStore/createCustomer",
+                                        "/OnlineStore/createImage",
+                                        "/OnlineStore/createPayment",
+                                        "/OnlineStore/customerLogin",
+                                        "/OnlineStore/deleteCustomerById/{id}"
+                                )
+                                .permitAll()
                                 .anyRequest().authenticated())
-                .sessionManagement(
-                session->
+                .authenticationProvider(authenticationProvider())
+//        http.formLogin(Customizer.withDefaults())
+                //allow basic auth or custom jwt based auth
+//                .httpBasic(Customizer.withDefaults())
+//                Make sessions stateless i.e.; every request must carry its own Jwt
+                .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(exception ->
-                exception.authenticationEntryPoint(unauthorizedHandler))
-                .headers(headers -> headers.frameOptions
-                (frameOptions -> frameOptions.sameOrigin()))
-                .csrf(csrf -> csrf.disable())
-                .addFilterBefore(authenticationJwtFilter(), UsernamePasswordAuthenticationFilter.class);
-//        http.formLogin(Customizer.withDefaults());
-//        http.httpBasic(Customizer.withDefaults());
-        return (SecurityFilterChain) http.build();
+//                add my jwt filter before the username and password filter
+                .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
+                return http.build();
     }
 
+    @Bean
+    public AuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
+        daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
+        daoAuthenticationProvider.setUserDetailsService(customUserDetailsService);
+        return daoAuthenticationProvider;
+    }
 
-
-//    To configure in memory user
-//    @Bean
-//    public UserDetailsService userDetailsService(DataSource dataSource) {
-//        UserDetails user1 = User.withUsername("Dondamzy")
-//                .password(passwordEncoder().encode("Password1"))
-//                .roles("USER")
-//                .build();
-//
-//        UserDetails admin = User.withUsername("admin")
-//                .password(passwordEncoder().encode("AdminPassword"))
-//                .roles("ADMIN")
-//                .build();
-//
-//        JdbcUserDetailsManager userDetailsManager = new JdbcUserDetailsManager(dataSource);
-//        userDetailsManager.createUser(user1);
-//        userDetailsManager.createUser(admin);
-//        return userDetailsManager;
-////      return new InMemoryUserDetailsManager(user1,admin);
-//    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean public AuthenticationProvider authenticationProvider(HttpSecurity http) throws Exception {
-        DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
-        daoAuthenticationProvider.setPasswordEncoder(new BCryptPasswordEncoder(10));
-        daoAuthenticationProvider.setUserDetailsService(userDetailsService);
-        return daoAuthenticationProvider;
-    }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config)  throws Exception {
+        return config.getAuthenticationManager();
     }
 }

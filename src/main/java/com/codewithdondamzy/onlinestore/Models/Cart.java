@@ -14,15 +14,20 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table(name = "cart")
 public class Cart {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private BigDecimal totalPrice = BigDecimal.ZERO;
+
+
     @OneToOne
-    @JoinColumn(name = "cart_id", nullable = false)
+    @JoinColumn(name = "customer_id",nullable = false)
     private Customer customer;
-    @OneToMany(mappedBy = "cartItem", cascade = CascadeType.ALL, orphanRemoval = true)
+
+    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL)
     private List<CartItem> cartItem;
 
 
@@ -41,7 +46,7 @@ public class Cart {
     private void updateTotalPrice() {
         this.totalPrice = cartItem.stream()
                 .map(CartItem -> {
-                    BigDecimal price = CartItem.getPrice();
+                    BigDecimal price = CartItem.getTotalPrice();
                     if (price == null) {
                         return BigDecimal.ZERO;
                     }

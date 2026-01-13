@@ -20,12 +20,12 @@ import java.io.IOException;
 
 @Component
 @AllArgsConstructor
-@NoArgsConstructor
+
 public class AuthTokenFilter extends OncePerRequestFilter {
 
-    private JwtUtils jwtUtils;
+    private final JwtUtils jwtUtils;
 
-    private UserDetailsService userDetailsService;
+    private final UserDetailsService userDetailsService;
 
     private static final Logger logger = LoggerFactory.getLogger(AuthTokenFilter.class);
 

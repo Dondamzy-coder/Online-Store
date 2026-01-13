@@ -11,7 +11,7 @@ import java.util.List;
 @AllArgsConstructor
 public class CartRequest {
     private BigDecimal totalPrice;
-    private Long customerId;
-    private List<CartItem> cartItemList;
+    private CreateCustomerRequest customer;
+    private List<CartItemRequest> cartItemList;
 
 }

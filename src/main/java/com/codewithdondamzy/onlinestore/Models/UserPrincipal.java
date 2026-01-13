@@ -49,4 +49,13 @@ public class UserPrincipal implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
+
+    public String getPhoneNumber() {
+    return customer.getPhoneNumber();
+    }
+
+    public String getEmailAddress(){
+        return customer.getEmail();
+    }
+
 }

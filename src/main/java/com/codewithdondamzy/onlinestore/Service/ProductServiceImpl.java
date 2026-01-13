@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+
 @Service
 public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
@@ -94,20 +95,33 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public UpdateProductResponse updateProductById(CreateProductRequest createProductRequest, Long id) {
+    public UpdateProductResponse updateProductById(CreateProductRequest createProductRequest, Long id,Long categoryId) {
         UpdateProductResponse updateProductResponse = new UpdateProductResponse();
         try {
+            Optional<Category> category = categoryRepository.findById(categoryId);
             Optional<Products> products = productRepository.findProductsById(id);
             if(products.isEmpty()) {
                 updateProductResponse.setStatusCode(400);
                 updateProductResponse.setMessage("Product not found");
                 return updateProductResponse;
             }
-            Products productToUpDate = products.get();
-            productToUpDate.setName(createProductRequest.getName());
-            productToUpDate.setPrice(createProductRequest.getPrice());
-            productToUpDate.setDescription(createProductRequest.getDescription());
-            productToUpDate.setCategory(createProductRequest.getCategory());
+            if(category.isEmpty()) {
+                updateProductResponse.setStatusCode(400);
+                updateProductResponse.setMessage("Category not found");
+                return updateProductResponse;
+            }
+            Category categoryToUpdate = category.get();
+            Products productToUpDate = Products.builder()
+                    .name(createProductRequest.getName())
+                    .price(createProductRequest.getPrice())
+                    .description(createProductRequest.getDescription())
+                    .category(categoryToUpdate)
+                    .build();
+//            products.get();
+//            productToUpDate.setName(createProductRequest.getName());
+//            productToUpDate.setPrice(createProductRequest.getPrice());
+//            productToUpDate.setDescription(createProductRequest.getDescription());
+//            productToUpDate.setCategory(createProductRequest.getCategory());
             productRepository.save(productToUpDate);
             updateProductResponse.setStatusCode(200);
             updateProductResponse.setMessage("Product Updated successfully!!");

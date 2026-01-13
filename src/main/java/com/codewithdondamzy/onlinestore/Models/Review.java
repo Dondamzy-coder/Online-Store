@@ -2,6 +2,7 @@ package com.codewithdondamzy.onlinestore.Models;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@Builder
 public class Review {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,7 +22,7 @@ public class Review {
     private LocalDateTime createdAt;
     @ManyToOne
     @JoinColumn(name = "product_id")
-    private Products products;
+    private Products product;
     @ManyToOne
     @JoinColumn(name = "customer_id")
     private Customer customer;

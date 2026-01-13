@@ -25,9 +25,10 @@ public class ProductController {
     public ResponseEntity<?> getProductById(@RequestBody CreateProductRequest createProductRequest,@PathVariable Long id) {
         return ResponseEntity.ok(productService.getProductById(id));
     }
-    @PutMapping("/updateProductById{id}")
-    public ResponseEntity<?> updateProductById(@RequestBody CreateProductRequest createProductRequest,@PathVariable Long id) {
-        return ResponseEntity.ok(productService.updateProductById(createProductRequest,id));
+    @PutMapping("/updateProductById{id}/{categoryId}")
+    public ResponseEntity<?> updateProductById(@RequestBody CreateProductRequest createProductRequest,
+                                               @PathVariable Long id,@PathVariable Long categoryId) {
+        return ResponseEntity.ok(productService.updateProductById(createProductRequest,id,categoryId));
     }
     @DeleteMapping("/deleteProductById{id}")
     public ResponseEntity<?> deleteProductById(@PathVariable Long id) {
