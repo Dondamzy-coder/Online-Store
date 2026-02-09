@@ -9,7 +9,6 @@ import java.util.List;
 
 @Data
 public class OrderRequest {
-    private String customerId;
     private String customerName;
     private LocalDate orderDate;
     private BigDecimal totalPrice;

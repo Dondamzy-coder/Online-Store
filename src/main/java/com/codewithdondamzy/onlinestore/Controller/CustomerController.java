@@ -3,37 +3,27 @@ package com.codewithdondamzy.onlinestore.Controller;
 import com.codewithdondamzy.onlinestore.Dtos.Request.ChangePasswordRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Request.CreateCustomerLoginRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Request.CreateCustomerRequest;
-import com.codewithdondamzy.onlinestore.Dtos.Response.CreateCustomerResponse;
 import com.codewithdondamzy.onlinestore.Dtos.Response.GetCustomerResponse;
 import com.codewithdondamzy.onlinestore.Dtos.Response.UpdateCustomerResponse;
-import com.codewithdondamzy.onlinestore.Models.Customer;
 import com.codewithdondamzy.onlinestore.Service.CustomerService;
-import com.codewithdondamzy.onlinestore.jwt.JwtUtils;
-import org.apache.catalina.Authenticator;
-import org.springframework.http.HttpStatus;
+import jakarta.annotation.security.PermitAll;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
+
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
 
 @RestController
 @RequestMapping("/OnlineStore")
 public class CustomerController {
     private final CustomerService customerService;
-    private final JwtUtils jwtUtils;
     private final AuthenticationManager authenticationManager;
 
-    public CustomerController(CustomerService customerService, JwtUtils jwtUtils, AuthenticationManager authenticationManager) {
+    public CustomerController(CustomerService customerService, AuthenticationManager authenticationManager) {
         this.customerService = customerService;
-        this.jwtUtils = jwtUtils;
         this.authenticationManager = authenticationManager;
     }
     @PostMapping("/createCustomer")
@@ -42,6 +32,7 @@ public class CustomerController {
     }
 
     @PostMapping("/customerLogin")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<?> customerLogin(@RequestBody CreateCustomerLoginRequest createCustomerLoginRequest) {
         return ResponseEntity.ok(customerService.customerLogin(createCustomerLoginRequest));
     }
@@ -58,13 +49,13 @@ public class CustomerController {
         return ResponseEntity.ok(newCustomerAddress);
     }
 
-    @PutMapping("/addItemToCart/{productId}/{cartId}")
+    @PutMapping("/addItemToCart/{productId}/{cartId}/")
     public ResponseEntity<?> addItemToCart(@PathVariable Long productId,@PathVariable Long cartId,@RequestParam int quantity) {
         return ResponseEntity.ok(customerService.addItemToCart(productId,cartId,quantity));
     }
 
 
-    @GetMapping("getAllCustomers")
+    @GetMapping("/getAllCustomers")
     public ResponseEntity<?> getAllCustomers() {
         return ResponseEntity.ok(customerService.getAllCustomers());
     }

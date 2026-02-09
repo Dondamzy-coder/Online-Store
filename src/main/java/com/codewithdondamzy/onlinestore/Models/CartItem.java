@@ -1,5 +1,6 @@
 package com.codewithdondamzy.onlinestore.Models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -29,9 +30,11 @@ public class CartItem {
 
     @ManyToOne
     @JoinColumn(name = "product_id",nullable = false)
+    @JsonBackReference
     private Products product;
 
-    public void calculateTotalPrice() {
+    public BigDecimal calculateTotalPrice() {
         this.totalPrice = this.unitPrice.multiply(BigDecimal.valueOf(quantity));
+        return totalPrice;
     }
 }

@@ -1,13 +1,15 @@
 package com.codewithdondamzy.onlinestore.Service;
 
-import com.codewithdondamzy.onlinestore.Dtos.Request.CartRequest;
+
 import com.codewithdondamzy.onlinestore.Dtos.Request.OrderRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Response.OrderResponse;
 import com.codewithdondamzy.onlinestore.Models.*;
 import com.codewithdondamzy.onlinestore.Repository.CartRepository;
+import com.codewithdondamzy.onlinestore.Repository.OrderItemsRepository;
 import com.codewithdondamzy.onlinestore.Repository.OrderRepository;
 import com.codewithdondamzy.onlinestore.Repository.ProductRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -18,14 +20,16 @@ public class OrderServiceImpl implements OrderService {
     private final CartRepository cartRepository;
     private final ProductRepository productRepository;
     private final CartService cartService;
+    private final OrderItemsRepository orderItemsRepository;
     private PaymentService paymentService;
     private OrderRepository orderRepository;
 
-    public OrderServiceImpl(PaymentService paymentService, CartRepository cartRepository, ProductRepository productRepository, CartService cartService) {
+    public OrderServiceImpl(PaymentService paymentService, CartRepository cartRepository, ProductRepository productRepository, CartService cartService, OrderItemsRepository orderItemsRepository) {
         this.paymentService = paymentService;
         this.cartRepository = cartRepository;
         this.productRepository = productRepository;
         this.cartService = cartService;
+        this.orderItemsRepository = orderItemsRepository;
     }
 
     private List<OrderItem> createOrderItems(Order order,Cart cart) {
@@ -58,46 +62,19 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(order);
         return order;
     }
-//
-//    OrderResponse createOrderItems(OrderRequest orderRequest, CartRequest cartRequest) {
-//        OrderResponse orderResponse = new OrderResponse();
-//        try {
-//            Optional<Order> newOrder = orderRepository.findOrderByOrderDate(LocalDate.parse(orderRequest.getOrderDate()));
-//            Optional<Cart> newCart = cartRepository.findById(cartRequest.getCustomerId());
-//            if (newOrder.isPresent()) {
-//                orderResponse.setStatusCode(400);
-//                orderResponse.setMessage("Order already exists");
-//                return orderResponse;
-//            }
-//            if(newCart.isEmpty()) {
-//                orderResponse.setStatusCode(400);
-//                orderResponse.setMessage("Cart not found");
-//                return orderResponse;
-//            }
-//            Set<OrderItem> orderItems = new HashSet<>();
-//            Order order = Order.builder()
-//                    .customerName(orderRequest.getCustomerName())
-//                    .customerName(orderRequest.getCustomerName())
-//                    .dateCreated(orderRequest.getOrderDate())
-//                    .orderStatus(orderRequest.getOrderStatus())
-//                    .orderItems(orderItems)
-//                    .build();
-//            orderRepository.save(order);
-//            orderResponse.setStatusCode(200);
-//            orderResponse.setMessage("Order created successfully!!!");
-//            return orderResponse;
-//        } catch (Exception e) {
-//            orderResponse.setStatusCode(500);
-//            orderResponse.setMessage(e.getMessage());
-//            return orderResponse;
-//        }
-//    }
 
+    @Transactional
     @Override
     public OrderResponse placeOrder(OrderRequest orderRequest, Long customerId) {
         OrderResponse orderResponse = new OrderResponse();
         try {
-            Cart cart = cartService.getCartByCustomerId(customerId);
+            Cart cart = cartRepository.getCartByCustomer_Id(customerId);
+            if (cart == null) {
+                orderResponse.setStatusCode(404);
+                orderResponse.setMessage("Cart not found for customer");
+                return orderResponse;
+            }
+
             if(!cart.getCustomer().isActive()) {
                 orderResponse.setStatusCode(401);
                 orderResponse.setMessage("Customer is not active to place order");
@@ -105,20 +82,24 @@ public class OrderServiceImpl implements OrderService {
             }
             Order order = createOrder(cart);
             List<OrderItem> orderItems = createOrderItems(order,cart);
+
             order.setOrderItems(new HashSet<>(orderItems));
             order.setTotalPrice(calculateTotalPrice(orderItems));
             Order savedOrder = orderRepository.save(order);
-            cartService.clearCartById(savedOrder.getId());
+            orderItemsRepository.saveAll(orderItems);
+
+            cartService.clearCartById(cart.getId());
             orderResponse.setStatusCode(200);
             orderResponse.setMessage("Order placed successfully");
+            orderResponse.setOrderId(savedOrder.getId());
             return orderResponse;
         } catch (Exception e) {
+            e.printStackTrace();
             orderResponse.setStatusCode(500);
             orderResponse.setMessage(e.getMessage());
             return orderResponse;
         }
     }
-
 
 
     private BigDecimal calculateTotalPrice(List<OrderItem> orderItems) {
@@ -138,7 +119,7 @@ public class OrderServiceImpl implements OrderService {
             Optional<Order> order = orderRepository.findOrderById(orderId);
             if(order.isPresent()) {
                 orderResponse.setStatusCode(200);
-                orderResponse.setMessage("Order exists and gotten Succesfully!");
+                orderResponse.setMessage("Order exists and gotten Successfully!");
                 return orderResponse;
             }
             orderResponse.setStatusCode(400);
@@ -154,16 +135,22 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderResponse getAllUserOrder(Long userId) {
         OrderResponse orderResponse = new OrderResponse();
-        List<Order> order = orderRepository.findOrderByCustomerId(userId);
-        if(order.isEmpty()) {
-            orderResponse.setStatusCode(400);
-            orderResponse.setMessage("Order Not Found,user has no order");
+        try {
+            List<Order> order = orderRepository.findOrderByCustomerId(userId);
+            if(order.isEmpty()) {
+                orderResponse.setStatusCode(400);
+                orderResponse.setMessage("Order Not Found,user has no order");
+                return orderResponse;
+            }
+            List<Order> orderList = new ArrayList<>(order);
+            orderResponse.setStatusCode(200);
+            orderResponse.setMessage("user Orders gotten Successfully");
+            orderResponse.setData(orderList.toString());
+            return orderResponse;
+        } catch (Exception e) {
+            orderResponse.setStatusCode(500);
+            orderResponse.setMessage("Internal server error,please try again later!!");
             return orderResponse;
         }
-        List<Order> orderList = order.stream().toList();
-        orderResponse.setStatusCode(200);
-        orderResponse.setMessage("user Orders gotten Successfully");
-        return orderResponse;
-
     }
 }

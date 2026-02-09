@@ -1,5 +1,6 @@
 package com.codewithdondamzy.onlinestore.Models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,6 +26,7 @@ public class Cart {
 
     @OneToOne
     @JoinColumn(name = "customer_id",nullable = false)
+    @JsonBackReference
     private Customer customer;
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL)
@@ -53,4 +55,5 @@ public class Cart {
                     return price.multiply(new BigDecimal(CartItem.getQuantity()));
                 }).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
+
 }

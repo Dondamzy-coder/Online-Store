@@ -14,4 +14,7 @@ public class CreateProductRequest {
     private int stockQuantity;
     private CreateCategoryRequest category;
     private List<CreateImageRequest> imageRequestList;
+    private String UUID;
+    private String brand;
+    private boolean isAvailable;
 }

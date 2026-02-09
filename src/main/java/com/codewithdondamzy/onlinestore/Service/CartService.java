@@ -15,6 +15,4 @@ public interface CartService {
 
     CartResponse getCartTotalPrice(Long id);
 
-
-    Cart getCartByCustomerId(Long customerId);
 }

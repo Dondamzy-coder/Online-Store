@@ -1,16 +1,24 @@
 package com.codewithdondamzy.onlinestore.Service;
 
+import com.codewithdondamzy.onlinestore.Dtos.Request.CartItemRequest;
+import com.codewithdondamzy.onlinestore.Dtos.Request.CreateCategoryRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Request.CreateProductRequest;
+import com.codewithdondamzy.onlinestore.Dtos.Request.ReviewRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Response.CreateProductResponse;
 import com.codewithdondamzy.onlinestore.Dtos.Response.DeleteProductResponse;
 import com.codewithdondamzy.onlinestore.Dtos.Response.GetProductResponse;
 import com.codewithdondamzy.onlinestore.Dtos.Response.UpdateProductResponse;
+import com.codewithdondamzy.onlinestore.Models.CartItem;
 import com.codewithdondamzy.onlinestore.Models.Category;
 import com.codewithdondamzy.onlinestore.Models.Products;
+import com.codewithdondamzy.onlinestore.Models.Review;
 import com.codewithdondamzy.onlinestore.Repository.CategoryRepository;
 import com.codewithdondamzy.onlinestore.Repository.ProductRepository;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -30,11 +38,25 @@ public class ProductServiceImpl implements ProductService {
     public CreateProductResponse createProduct(CreateProductRequest createProductRequest) {
         CreateProductResponse createProductResponse = new CreateProductResponse();
         try {
+            Category category = Category.builder()
+                    .name(createProductRequest.getCategory().getName())
+                    .isActive(true)
+                    .productsList(new ArrayList<>())
+                    .build();
             Products product = Products.builder()
                     .name(createProductRequest.getName())
+                    .brand(createProductRequest.getBrand())
                     .description(createProductRequest.getDescription())
                     .price(createProductRequest.getPrice())
+                    .category(category)
+                    .isAvailable(true)
+                    .cartItem(new ArrayList<>())
+                    .reviews(new ArrayList<>())
+                    .inventory(createProductRequest.getStockQuantity())
+                    .imageList(new ArrayList<>())
                     .build();
+            category.getProductsList().add(product);
+            categoryRepository.save(category);
 //            product.setName(createProductRequest.getName());
 //            product.setPrice(createProductRequest.getPrice());
 //            product.setDescription(createProductRequest.getDescription());
@@ -44,6 +66,7 @@ public class ProductServiceImpl implements ProductService {
             createProductResponse.setProduct(product);
             return createProductResponse;
         } catch (Exception e) {
+            e.printStackTrace();
             createProductResponse.setStatusCode(400);
             createProductResponse.setMessage("Invalid input.Product cannot be created");
         }
@@ -60,14 +83,17 @@ public class ProductServiceImpl implements ProductService {
                 getProductResponse.setMessage("Products not available");
                 return getProductResponse;
             }
-            List<Products> product = existingProducts.stream().toList();
+
+            List<Products> productsToGet = new ArrayList<>(existingProducts);
+            productsToGet.sort((p1, p2) -> p1.getName().compareToIgnoreCase(p2.getName()));
             getProductResponse.setStatusCode(200);
-            getProductResponse.setMessage("Products gotten successfully!!");
-            getProductResponse.setData(product);
+            getProductResponse.setMessage("Products found successfully");
+            getProductResponse.setData(productsToGet);
             return getProductResponse;
         } catch (Exception e) {
+            e.printStackTrace();
             getProductResponse.setStatusCode(500);
-            getProductResponse.setMessage("Product not available");
+            getProductResponse.setMessage("Invalid search!!");
             return getProductResponse;
         }
     }
@@ -95,10 +121,10 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public UpdateProductResponse updateProductById(CreateProductRequest createProductRequest, Long id,Long categoryId) {
+    public UpdateProductResponse updateProductById(CreateProductRequest createProductRequest, Long id) {
         UpdateProductResponse updateProductResponse = new UpdateProductResponse();
         try {
-            Optional<Category> category = categoryRepository.findById(categoryId);
+            Optional<Category> category = categoryRepository.findByName(createProductRequest.getCategory().getName());
             Optional<Products> products = productRepository.findProductsById(id);
             if(products.isEmpty()) {
                 updateProductResponse.setStatusCode(400);
@@ -113,9 +139,12 @@ public class ProductServiceImpl implements ProductService {
             Category categoryToUpdate = category.get();
             Products productToUpDate = Products.builder()
                     .name(createProductRequest.getName())
+                    .brand(createProductRequest.getBrand())
                     .price(createProductRequest.getPrice())
                     .description(createProductRequest.getDescription())
                     .category(categoryToUpdate)
+                    .inventory(createProductRequest.getStockQuantity())
+                    .isAvailable(true)
                     .build();
 //            products.get();
 //            productToUpDate.setName(createProductRequest.getName());
@@ -159,18 +188,19 @@ public class ProductServiceImpl implements ProductService {
     public GetProductResponse getProductByCategoryName(String category) {
         GetProductResponse getProductResponse = new GetProductResponse();
         try {
-            Optional<Products> product = productRepository.findByCategoryName(category);
+            List<Products> product = productRepository.findByCategoryName(category);
             if(product.isEmpty()) {
                 getProductResponse.setStatusCode(400);
                 getProductResponse.setMessage("Product not found in the category "+ category);
                 return getProductResponse;
             }
-            Products productToGet = product.get();
+            List<Products> productToGet = new ArrayList<>(product);
             getProductResponse.setStatusCode(200);
             getProductResponse.setMessage("Product found successfully");
             getProductResponse.setData(productToGet);
             return getProductResponse;
         } catch (Exception e) {
+            e.printStackTrace();
             getProductResponse.setStatusCode(500);
             getProductResponse.setMessage("Invalid search!!");
             return getProductResponse;
@@ -180,27 +210,40 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public GetProductResponse getProductByBrand(String brand) {
         GetProductResponse getProductResponse = new GetProductResponse();
-        Optional<Products> products = productRepository.findByBrand(brand);
-        productRepository.findByBrand(brand);
-        return getProductResponse;
+        try {
+            List<Products> products = productRepository.findByBrand(brand);
+            if(products.isEmpty()) {
+                getProductResponse.setStatusCode(400);
+                getProductResponse.setMessage("Product with brand name " + brand + " not found");
+                return getProductResponse;
+            }
+            List<Products> productsList = new ArrayList<>(products.size());
+            getProductResponse.setStatusCode(200);
+            getProductResponse.setMessage("Product  with brand name " + brand + " found successfully");
+            getProductResponse.setData(productsList);
+            return getProductResponse;
+        } catch (Exception e) {
+            getProductResponse.setStatusCode(500);
+            getProductResponse.setMessage("Invalid search!!");
+            return getProductResponse;
+        }
     }
 
     @Override
-    public GetProductResponse getProductByCategoryNameAndBrand(String category, String brand) {
+    public GetProductResponse getProductByCategoryNameAndBrand(String category,String brand) {
         GetProductResponse getProductResponse = new GetProductResponse();
-        Optional<Products> products = productRepository.findByCategoryNameAndBrand(category, brand);
-        if (products.isEmpty()) {
-            getProductResponse.setStatusCode(404);
-            getProductResponse.setMessage("The search brand of product is not available in store!");
-            getProductResponse.setData(products);
+       List<Products> products = productRepository.findByCategoryNameAndBrand(category,brand);
+        if(products.isEmpty()) {
+            getProductResponse.setStatusCode(400);
+            getProductResponse.setMessage("Product with category name "
+                    + category + "and brand name " + brand + " not found");
+            return getProductResponse;
         }
-        if (products.isPresent()) {
-            Products productToGet = products.get();
+
+            List<Products> productToGet = new ArrayList<>(products);
             getProductResponse.setStatusCode(200);
             getProductResponse.setMessage("Product found successfully");
             getProductResponse.setData(productToGet);
-            return getProductResponse;
-        }
             return getProductResponse;
     }
     @Override

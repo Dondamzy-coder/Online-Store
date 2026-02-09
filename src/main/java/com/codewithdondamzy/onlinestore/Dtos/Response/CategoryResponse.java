@@ -7,5 +7,6 @@ import lombok.Data;
 public class CategoryResponse {
     private int statusCode;
     private String message;
-    private Category category;
+    private Object data;
+
 }

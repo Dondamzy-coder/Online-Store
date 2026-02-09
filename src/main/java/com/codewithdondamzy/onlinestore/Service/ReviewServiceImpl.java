@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @AllArgsConstructor
@@ -56,10 +57,20 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public ReviewResponse createReview(ReviewRequest reviewRequest) {
         ReviewResponse reviewResponse = new ReviewResponse();
+        Optional<Products> products = productRepository.findByName(reviewRequest
+                .getCreateProductRequest().getName());
+        if(products.isEmpty()) {
+            reviewResponse.setStatusCode(404);
+            reviewResponse.setMessage("Product Not Found");
+            return reviewResponse;
+        }
+            Products productToReview = products.get();
         Review review = new Review();
         review.setRating(reviewRequest.getRating());
         review.setComment(reviewRequest.getComment());
         review.setCreatedAt(LocalDateTime.now());
+        review.setProduct(productToReview);
+        review.setUUID(UUID.randomUUID().toString());
         reviewRepository.save(review);
         reviewResponse.setStatusCode(200);
         reviewResponse.setMessage("Review Created");

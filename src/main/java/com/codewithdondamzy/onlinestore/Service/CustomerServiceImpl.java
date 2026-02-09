@@ -10,15 +10,18 @@ import com.codewithdondamzy.onlinestore.Dtos.Response.GetCustomerResponse;
 import com.codewithdondamzy.onlinestore.Dtos.Response.UpdateCustomerResponse;
 import com.codewithdondamzy.onlinestore.Models.*;
 import com.codewithdondamzy.onlinestore.Repository.*;
-import com.codewithdondamzy.onlinestore.jwt.JwtUtils;
+import com.codewithdondamzy.onlinestore.config.JwtService;
+import com.codewithdondamzy.onlinestore.config.UserPrincipal;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -33,11 +36,13 @@ public class CustomerServiceImpl implements CustomerService {
     private final OrderRepository orderRepository;
     private final ReviewRepository reviewRepository;
     private final AuthenticationManager authenticationManager;
-    private final JwtUtils jwtUtils;
+    private final JwtService jwtService;
 
     public CustomerServiceImpl(CustomerRepository customerRepository, PasswordEncoder passwordEncoder,
                                AddressRepository addressRepository, ProductRepository productRepository,
-                               CartRepository cartRepository, CartItemRepository cartItemRepository, OrderRepository orderRepository, ReviewRepository reviewRepository, AuthenticationManager authenticationManager, JwtUtils jwtUtils) {
+                               CartRepository cartRepository, CartItemRepository cartItemRepository,
+                               OrderRepository orderRepository, ReviewRepository reviewRepository,
+                               AuthenticationManager authenticationManager, JwtService jwtService) {
         this.customerRepository = customerRepository;
         this.passwordEncoder = passwordEncoder;
         this.addressRepository = addressRepository;
@@ -47,7 +52,7 @@ public class CustomerServiceImpl implements CustomerService {
         this.orderRepository = orderRepository;
         this.reviewRepository = reviewRepository;
         this.authenticationManager = authenticationManager;
-        this.jwtUtils = jwtUtils;
+        this.jwtService = jwtService;
     }
 
 
@@ -65,10 +70,12 @@ public class CustomerServiceImpl implements CustomerService {
                     .name(createCustomerRequest.getName())
                     .email(createCustomerRequest.getEmail())
                     .userName(createCustomerRequest.getUserName())
-                    .password(createCustomerRequest.getPassword())
+                    .phoneNumber(createCustomerRequest.getPhoneNumber())
+                    .password(passwordEncoder.encode(createCustomerRequest.getPassword()))
                     .createdAt(LocalDate.now())
                     .role(Role.CUSTOMER)
                     .UUID(UUID.randomUUID().toString())
+                    .isActive(true)
                     .build();
             // Create cart
             Cart cart = Cart.builder()
@@ -122,14 +129,17 @@ public class CustomerServiceImpl implements CustomerService {
                             createCustomerLoginRequest.getPassword()
                     )
             );
-            String jwtToken = jwtUtils.generateJwtToken(new UserPrincipal(existingCustomer));
+            String jwtToken = jwtService.generateToken(new UserPrincipal(existingCustomer));
             createCustomerResponse.setJwtToken(jwtToken);
             createCustomerResponse.setStatusCode(200);
             createCustomerResponse.setMessage("Customer login successfully!!");
             return createCustomerResponse;
         } catch (IllegalArgumentException e) {
+            e.printStackTrace();
             createCustomerResponse.setStatusCode(500);
             createCustomerResponse.setMessage("Invalid input try again!!");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
         }
         return createCustomerResponse;
     }
@@ -173,9 +183,9 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public UpdateCustomerResponse setAddressAsDefault(Long addressId, Authentication authentication) {
         UpdateCustomerResponse updateCustomerResponse = new UpdateCustomerResponse();
-        String emailAddress = authentication.getName();
+        String userName = authentication.getName();
         try {
-            Optional<Customer> customer = customerRepository.findCustomerByEmail(emailAddress);
+            Optional<Customer> customer = Optional.ofNullable(customerRepository.findByUserName(userName));
             Optional<Address> address = addressRepository.findById(addressId);
             if (customer.isEmpty()) {
                 updateCustomerResponse.setStatusCode(400);
@@ -210,37 +220,56 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
+    @Transactional
     public UpdateCustomerResponse addItemToCart(Long productId, Long cartId, int quantity) {
-        UpdateCustomerResponse updateCustomerResponse = new UpdateCustomerResponse();
+
+        UpdateCustomerResponse response = new UpdateCustomerResponse();
+        // 1. Validate product
         try {
-            Optional<Products> product = productRepository.findProductsById(productId);
-            Optional<Cart> cart = cartRepository.findById(cartId);
-            if (product.isEmpty()) {
-                updateCustomerResponse.setStatusCode(401);
-                updateCustomerResponse.setMessage("Product not found,cannot be added to cart!");
-                return updateCustomerResponse;
-            }
-            if (cart.isEmpty()) {
-                updateCustomerResponse.setStatusCode(401);
-                updateCustomerResponse.setMessage("Cart not found,product cannot be added to cart!");
-                return updateCustomerResponse;
+            Optional<Products> product = productRepository.findById(productId);
+            if(product.isEmpty()) {
+                response.setStatusCode(400);
+                response.setMessage("Product is not available");
+                return response;
             }
             Products productToAdd = product.get();
-            Cart cartToAdd = cart.get();
-            CartItem cartItem = new CartItem();
-            cartItem.setProduct(productToAdd);
-            cartItem.setQuantity(quantity);
-            cartItem.setCart(cartToAdd);
-            cartItem.calculateTotalPrice();
-            cartItemRepository.save(cartItem);
-            cartRepository.save(cartToAdd);
-            updateCustomerResponse.setStatusCode(200);
-            updateCustomerResponse.setMessage("Product added successfully!!");
-            return updateCustomerResponse;
-        } catch (Exception e) {
-            updateCustomerResponse.setStatusCode(500);
-            updateCustomerResponse.setMessage("Unexpected error occurred!!");
-            return updateCustomerResponse;
+            // 2. Validate cart
+            Cart cart = cartRepository.findById(cartId)
+                    .orElseThrow(() -> new RuntimeException("Cart not found"));
+
+            // 3. Check if products already exist in carts
+            Optional<CartItem> existingItem =
+                    cartItemRepository.findByCartAndProduct(cart,product);
+
+            if (existingItem.isPresent()) {
+                // Update quantity
+                CartItem cartItem = existingItem.get();
+                cartItem.setQuantity(cartItem.getQuantity() + quantity);
+                cartItem.calculateTotalPrice();
+                cartItemRepository.save(cartItem);
+            } else {
+                // Create new cart items
+                CartItem cartItem = new CartItem();
+                cartItem.setCart(cart);
+                cartItem.setProduct(productToAdd);
+                cartItem.setQuantity(quantity);
+                cartItem.setUnitPrice(productToAdd.getPrice());
+                cartItem.calculateTotalPrice();
+                cartItemRepository.save(cartItem);
+                cart.addItem(cartItem);
+            }
+
+            // 4. Recalculate cart total
+            cart.setTotalPrice(cart.getTotalPrice());
+            cartRepository.save(cart);
+
+            response.setStatusCode(200);
+            response.setMessage("Product added to cart successfully");
+            return response;
+        } catch (RuntimeException e) {
+            response.setStatusCode(500);
+            response.setMessage("Unable to add product to cart");
+            return response;
         }
     }
 
@@ -254,10 +283,10 @@ public class CustomerServiceImpl implements CustomerService {
                 getCustomerResponse.setMessage("No customer found!!");
                 return getCustomerResponse;
             }
-            Customer customerToGet = customerList.get(20);
+            List<Customer> allCustomers = new ArrayList<>(customerList);
             getCustomerResponse.setStatusCode(200);
             getCustomerResponse.setMessage("Store customers gotten successfully");
-            getCustomerResponse.setCustomer(customerToGet);
+            getCustomerResponse.setCustomer(allCustomers);
             return getCustomerResponse;
         } catch (Exception e) {
             getCustomerResponse.setStatusCode(500);
@@ -280,7 +309,6 @@ public class CustomerServiceImpl implements CustomerService {
             Customer customerToGet = customerToFind.get();
             getCustomerResponse.setStatusCode(200);
             getCustomerResponse.setMessage("Customer found successfully");
-            getCustomerResponse.setCustomer(customerToGet);
             return getCustomerResponse;
         } catch (Exception e) {
             getCustomerResponse.setStatusCode(404);
@@ -315,7 +343,8 @@ public class CustomerServiceImpl implements CustomerService {
             updateCustomerResponse.setMessage("Customer updated successfully!!");
             return updateCustomerResponse;
         } catch (Exception e) {
-            updateCustomerResponse.setStatusCode(404);
+            e.printStackTrace();
+            updateCustomerResponse.setStatusCode(500);
             updateCustomerResponse.setMessage("Invalid input for customer");
         }
         return updateCustomerResponse;

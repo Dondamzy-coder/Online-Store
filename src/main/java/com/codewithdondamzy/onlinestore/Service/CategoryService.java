@@ -10,5 +10,6 @@ public interface CategoryService {
     CategoryResponse getCategoryByName(String name);
     CategoryResponse updateCategory(CreateCategoryRequest createCategoryRequest,String name);
     CategoryResponse getAllCategories();
+    CategoryResponse deleteCategoryById(Long id);
     CategoryResponse deleteCategoryByName(String name);
 }

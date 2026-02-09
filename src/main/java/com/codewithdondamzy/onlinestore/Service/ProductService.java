@@ -18,7 +18,7 @@ public interface ProductService {
 
     GetProductResponse getProductById(Long id);
 
-    UpdateProductResponse updateProductById(CreateProductRequest createProductRequest, Long id,Long categoryId);
+    UpdateProductResponse updateProductById(CreateProductRequest createProductRequest, Long id);
 
     DeleteProductResponse deleteProductById(Long id);
 
@@ -26,7 +26,7 @@ public interface ProductService {
 
    GetProductResponse getProductByBrand(String brand);
 
-   GetProductResponse getProductByCategoryNameAndBrand(String category, String brand);
+   GetProductResponse getProductByCategoryNameAndBrand(String category,String brand);
 
     GetProductResponse getProductByName(String name);
 

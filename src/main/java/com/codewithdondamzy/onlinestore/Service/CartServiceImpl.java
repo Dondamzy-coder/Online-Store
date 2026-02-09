@@ -36,6 +36,7 @@ public class CartServiceImpl implements CartService {
             cartRepository.save(cart);
             cartResponse.setStatusCode(200);
             cartResponse.setMessage("Success");
+            cartResponse.setData(cart);
             return cartResponse;
         } catch (RuntimeException e) {
             cartResponse.setStatusCode(500);
@@ -52,7 +53,6 @@ public class CartServiceImpl implements CartService {
         try {
             Cart cart = cartRepository.findById(id).orElseThrow(()
                     -> new RuntimeException("Cart not found"));
-            cartItemRepository.deleteAllByCartId(id);
             cart.getCartItem().clear();
             cartRepository.deleteCartById(id);
             cartResponse.setStatusCode(200);
@@ -138,7 +138,7 @@ public class CartServiceImpl implements CartService {
             }
             cartResponse.setStatusCode(200);
             cartResponse.setMessage("Total price of cart item gotten successfully!!");
-            cartResponse.setData(totalPrice.toString());
+            cartResponse.setData(totalPrice);
             return cartResponse;
         } catch (RuntimeException e) {
             cartResponse.setStatusCode(500);
@@ -147,8 +147,4 @@ public class CartServiceImpl implements CartService {
         }
     }
 
-    @Override
-    public Cart getCartByCustomerId(Long customerId) {
-        return null;
-    }
 }

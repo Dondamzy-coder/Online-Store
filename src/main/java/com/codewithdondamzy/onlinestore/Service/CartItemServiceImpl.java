@@ -58,6 +58,7 @@ public class CartItemServiceImpl implements CartItemService{
                     cartItem.setTotalPrice(newProduct.getPrice());
                 }
                 cartItem.setQuantity(cartItem.getQuantity() + item.getQuantity());
+                cartItem.setTotalPrice(cartItem.calculateTotalPrice());
             }
 
         }

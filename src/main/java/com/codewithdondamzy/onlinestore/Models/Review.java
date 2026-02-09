@@ -1,5 +1,6 @@
 package com.codewithdondamzy.onlinestore.Models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,9 +20,11 @@ public class Review {
     private Long id;
     private int rating;
     private String comment;
+    private String UUID;
     private LocalDateTime createdAt;
     @ManyToOne
     @JoinColumn(name = "product_id")
+    @JsonBackReference
     private Products product;
     @ManyToOne
     @JoinColumn(name = "customer_id")

@@ -1,5 +1,6 @@
 package com.codewithdondamzy.onlinestore.Models;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,7 +18,8 @@ public class Category {
     @Id@GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
     private String name;
-    @OneToMany(mappedBy = "category")
+    @OneToMany(mappedBy = "category",cascade = CascadeType.ALL,orphanRemoval = true)
+    @JsonManagedReference
     private List<Products> productsList;
     private boolean isActive;
 }

@@ -1,11 +1,13 @@
 package com.codewithdondamzy.onlinestore.Models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.annotation.sql.DataSourceDefinition;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import net.minidev.json.annotate.JsonIgnore;
 
 @Data
 @AllArgsConstructor
@@ -22,7 +24,11 @@ public class Address {
     private String zipCode;
     private String country;
     private boolean isDefault;
+    private String UUID;
+
+
     @ManyToOne
     @JoinColumn(name = "customer_id", nullable = false)
+    @JsonBackReference
     private Customer customer;
 }

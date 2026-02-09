@@ -1,6 +1,8 @@
 package com.codewithdondamzy.onlinestore.Models;
 
 import com.codewithdondamzy.onlinestore.Dtos.Request.CreateCustomerRequest;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,13 +25,17 @@ public class Customer {
     private Long id;
     private String name;
 
+
     @OneToMany(mappedBy = "customer",cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<Address> addresses = new ArrayList<>();
 
     @OneToOne(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private Cart cart;
 
     private String email;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
     private String userName;
     private String UUID;

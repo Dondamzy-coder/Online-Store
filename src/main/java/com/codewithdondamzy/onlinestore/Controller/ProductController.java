@@ -17,20 +17,20 @@ public class ProductController {
     public ResponseEntity<?> createProduct(@RequestBody CreateProductRequest createProductRequest) {
         return ResponseEntity.ok(productService.createProduct(createProductRequest));
     }
-    @PostMapping("/getProduct")
+    @GetMapping("/getProduct")
     public ResponseEntity<?> getAllProducts() {
         return ResponseEntity.ok(productService.getAllProducts());
     }
-    @GetMapping("//getProductById{id}")
-    public ResponseEntity<?> getProductById(@RequestBody CreateProductRequest createProductRequest,@PathVariable Long id) {
+    @GetMapping("/getProductById/{id}")
+    public ResponseEntity<?> getProductById(@PathVariable Long id) {
         return ResponseEntity.ok(productService.getProductById(id));
     }
-    @PutMapping("/updateProductById{id}/{categoryId}")
+    @PutMapping("/updateProductById/{id}")
     public ResponseEntity<?> updateProductById(@RequestBody CreateProductRequest createProductRequest,
-                                               @PathVariable Long id,@PathVariable Long categoryId) {
-        return ResponseEntity.ok(productService.updateProductById(createProductRequest,id,categoryId));
+                                               @PathVariable Long id) {
+        return ResponseEntity.ok(productService.updateProductById(createProductRequest,id));
     }
-    @DeleteMapping("/deleteProductById{id}")
+    @DeleteMapping("/deleteProductById/{id}")
     public ResponseEntity<?> deleteProductById(@PathVariable Long id) {
         return ResponseEntity.ok(productService.deleteProductById(id));
     }

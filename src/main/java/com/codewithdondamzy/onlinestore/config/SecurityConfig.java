@@ -1,7 +1,6 @@
 package com.codewithdondamzy.onlinestore.config;
 
 import com.codewithdondamzy.onlinestore.Service.CustomUserDetailsService;
-import com.codewithdondamzy.onlinestore.jwt.AuthTokenFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,12 +21,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 @RequiredArgsConstructor
 @Configuration
-@EnableMethodSecurity
 public class SecurityConfig {
 
     private final CustomUserDetailsService customUserDetailsService; // to load user information
 
-    private final AuthTokenFilter authTokenFilter;
+    private final JwtFilter jwtFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -37,6 +35,7 @@ public class SecurityConfig {
                         authorizeRequests
                                 .requestMatchers(
                                         "/OnlineStore/createCategory",
+                                        "/OnlineStore/createProduct",
                                         "/OnlineStore/createCustomer",
                                         "/OnlineStore/createImage",
                                         "/OnlineStore/createPayment",
@@ -53,7 +52,7 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 //                add my jwt filter before the username and password filter
-                .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
                 return http.build();
     }
 
