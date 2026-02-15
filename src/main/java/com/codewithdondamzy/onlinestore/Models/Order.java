@@ -1,10 +1,8 @@
 package com.codewithdondamzy.onlinestore.Models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -33,7 +31,9 @@ public class Order {
     private OrderStatus orderStatus;
     private String shippingId;
     @ManyToOne
+    @ToString.Exclude
     @JoinColumn(name = "customer_id")
+    @JsonBackReference
     private Customer customer;
     @OneToMany(mappedBy = "order",cascade = CascadeType.ALL,orphanRemoval = true)
     private Set<OrderItem> orderItems = new HashSet<>();

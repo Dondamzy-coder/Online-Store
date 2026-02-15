@@ -27,6 +27,7 @@ public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
 
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -34,12 +35,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
                                 .requestMatchers(
+                                        "/OnlineStore/customerLogin",
                                         "/OnlineStore/createCategory",
                                         "/OnlineStore/createProduct",
                                         "/OnlineStore/createCustomer",
                                         "/OnlineStore/createImage",
                                         "/OnlineStore/createPayment",
-                                        "/OnlineStore/customerLogin",
                                         "/OnlineStore/deleteCustomerById/{id}"
                                 )
                                 .permitAll()

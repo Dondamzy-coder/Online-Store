@@ -35,7 +35,8 @@ public class JwtFilter extends OncePerRequestFilter {
                 || path.startsWith("/OnlineStore/createProduct")
                 || path.startsWith("/OnlineStore/createCategory")
                 || path.startsWith("/OnlineStore/createPayment")
-                || path.startsWith("/OnlineStore/createImage")) {
+                || path.startsWith("/OnlineStore/createImage")
+        || path.startsWith("/OnlineStore/deleteCustomerById/{id}")) {
             filterChain.doFilter(request, response);
             return;
         }

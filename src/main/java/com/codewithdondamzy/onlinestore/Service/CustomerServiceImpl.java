@@ -13,9 +13,11 @@ import com.codewithdondamzy.onlinestore.Repository.*;
 import com.codewithdondamzy.onlinestore.config.JwtService;
 import com.codewithdondamzy.onlinestore.config.UserPrincipal;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -73,7 +75,7 @@ public class CustomerServiceImpl implements CustomerService {
                     .phoneNumber(createCustomerRequest.getPhoneNumber())
                     .password(passwordEncoder.encode(createCustomerRequest.getPassword()))
                     .createdAt(LocalDate.now())
-                    .role(Role.CUSTOMER)
+                    .role(createCustomerRequest.getRole())
                     .UUID(UUID.randomUUID().toString())
                     .isActive(true)
                     .build();
@@ -102,26 +104,21 @@ public class CustomerServiceImpl implements CustomerService {
             customerRepository.save(customer);
             creatCustomerResponse.setStatusCode(200);
             creatCustomerResponse.setMessage("Customer created successfully!!");
+            creatCustomerResponse.setData(customer);
 
             return creatCustomerResponse;
         } catch (Exception e) {
             e.printStackTrace();
             creatCustomerResponse.setStatusCode(500);
             creatCustomerResponse.setMessage("Internal Server Error,please try again later!!");
+            return creatCustomerResponse;
         }
-        return creatCustomerResponse;
     }
 
     @Override
     public CreateCustomerResponse customerLogin(CreateCustomerLoginRequest createCustomerLoginRequest) {
         CreateCustomerResponse createCustomerResponse = new CreateCustomerResponse();
         try {
-            Customer existingCustomer = customerRepository.findByUserName(createCustomerLoginRequest.getUserName());
-            if(existingCustomer == null) {
-                createCustomerResponse.setStatusCode(401);
-                createCustomerResponse.setMessage("Customer with username " + createCustomerLoginRequest.getUserName() + " not found");
-                return createCustomerResponse;
-            }
             // 🔐 Authenticate credentials using Spring Security
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -129,19 +126,31 @@ public class CustomerServiceImpl implements CustomerService {
                             createCustomerLoginRequest.getPassword()
                     )
             );
+            Customer existingCustomer = customerRepository.findByUserName(createCustomerLoginRequest.getUserName());
+            if (existingCustomer == null) {
+                createCustomerResponse.setStatusCode(401);
+                createCustomerResponse.setMessage("Customer with username " + createCustomerLoginRequest.getUserName() + " not found");
+                return createCustomerResponse;
+            }
+
+            System.out.println("Raw password: " + createCustomerLoginRequest.getPassword());
+            System.out.println("DB password: " + existingCustomer.getPassword());
+            System.out.println("Matches: " + passwordEncoder.matches(
+                    createCustomerLoginRequest.getPassword(),
+                    existingCustomer.getPassword()
+            ));
+
             String jwtToken = jwtService.generateToken(new UserPrincipal(existingCustomer));
             createCustomerResponse.setJwtToken(jwtToken);
             createCustomerResponse.setStatusCode(200);
             createCustomerResponse.setMessage("Customer login successfully!!");
             return createCustomerResponse;
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | NoSuchAlgorithmException e) {
             e.printStackTrace();
             createCustomerResponse.setStatusCode(500);
             createCustomerResponse.setMessage("Invalid input try again!!");
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
+            return createCustomerResponse;
         }
-        return createCustomerResponse;
     }
 
     @Override
@@ -318,12 +327,10 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public UpdateCustomerResponse updateCustomer(CreateCustomerRequest createCustomerRequest, Authentication authentication) {
+    public UpdateCustomerResponse updateCustomerById(CreateCustomerRequest createCustomerRequest, Long id) {
         UpdateCustomerResponse updateCustomerResponse = new UpdateCustomerResponse();
         try {
-            String emailAddress = authentication.getName();
-            ;
-            Optional<Customer> customer = customerRepository.findCustomerByEmail(emailAddress);
+            Optional<Customer> customer = customerRepository.findById(id);
             if (customer.isEmpty()) {
                 updateCustomerResponse.setStatusCode(400);
                 updateCustomerResponse.setMessage("Customer not found");
@@ -331,12 +338,14 @@ public class CustomerServiceImpl implements CustomerService {
             }
             Customer customerToUpdate = Customer.builder()
                     .name(createCustomerRequest.getName())
-                    .role(Role.ADMIN)
+                    .role(createCustomerRequest.getRole())
                     .userName(createCustomerRequest.getUserName())
                     .UUID(UUID.randomUUID().toString())
                     .password(passwordEncoder.encode(customer.get().getPassword()))
-                    .review(customer.get().getReview())
+                    .review(new ArrayList<>(customer.get().getReview()))
                     .email(createCustomerRequest.getEmail())
+                    .isActive(true)
+                    .createdAt(LocalDate.now())
                     .build();
             customerRepository.save(customerToUpdate);
             updateCustomerResponse.setStatusCode(200);

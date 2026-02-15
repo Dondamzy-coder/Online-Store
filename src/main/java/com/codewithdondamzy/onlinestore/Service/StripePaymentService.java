@@ -21,7 +21,6 @@ public class StripePaymentService implements PaymentService {
         payment.setReferenceNumber(paymentRequest.getReferenceNumber());
         payment.setStatus(paymentRequest.getStatus());
         payment.setMethod(paymentRequest.getMethod());
-        payment.setItem(payment.getItem());
         paymentRepository.save(payment);
         PaymentResponse paymentResponse = new PaymentResponse();
         paymentResponse.setDescription(paymentRequest.getDescription());

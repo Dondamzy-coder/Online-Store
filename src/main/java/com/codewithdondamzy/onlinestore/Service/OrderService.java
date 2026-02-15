@@ -8,5 +8,5 @@ public interface OrderService {
 
     OrderResponse getOrderById(Long orderId);
 
-    OrderResponse getAllUserOrder(Long userId);
+    OrderResponse getAllCustomerOrder(Long customerId);
 }

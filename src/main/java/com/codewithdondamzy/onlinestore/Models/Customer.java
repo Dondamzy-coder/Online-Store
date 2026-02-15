@@ -4,16 +4,14 @@ import com.codewithdondamzy.onlinestore.Dtos.Request.CreateCustomerRequest;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+@ToString(exclude = "addresses")
 @Entity
 @Data
 @Builder
@@ -41,6 +39,7 @@ public class Customer {
     private String UUID;
     private String phoneNumber;
     @OneToMany(mappedBy = "customer",cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<Order> orders;
 
     @OneToMany(mappedBy = "customer",cascade = CascadeType.ALL, orphanRemoval = true)
@@ -51,19 +50,19 @@ public class Customer {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    public String getPassword() {
-        if (CreateCustomerRequest.isValidPassword(password))
-            return BCrypt.hashpw(password, BCrypt.gensalt());
-        else
-            throw new RuntimeException("password must contain at least one " +
-                    "capital letter, small letter and special characters");
-    }
+//    public String getPassword() {
+//        if (CreateCustomerRequest.isValidPassword(password))
+//            return BCrypt.hashpw(password, BCrypt.gensalt());
+//        else
+//            throw new RuntimeException("password must contain at least one " +
+//                    "capital letter, small letter and special characters");
+//    }
 
 
-    private static boolean isValidPassword(String password) {
-        if(password == null) {
-            return false;
-        }
-        return password.matches("^(?=.*[A-Z])(?=.*[a-z])(?=.*[@#$%^&+=!]).{8,}$");
-    }
+//    private static boolean isValidPassword(String password) {
+//        if(password == null) {
+//            return false;
+//        }
+//        return password.matches("^(?=.*[A-Z])(?=.*[a-z])(?=.*[@#$%^&+=!]).{8,}$");
+//    }
 }

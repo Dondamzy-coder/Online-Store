@@ -15,5 +15,5 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     Optional<Order> findOrderByDateCreated(LocalDate dateCreated);
 
-    List<Order> findOrderByCustomerId(Long userId);
+    List<Order> findOrderByCustomer_Id(Long customerId);
 }

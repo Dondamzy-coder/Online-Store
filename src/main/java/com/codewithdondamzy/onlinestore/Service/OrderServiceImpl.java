@@ -4,10 +4,7 @@ package com.codewithdondamzy.onlinestore.Service;
 import com.codewithdondamzy.onlinestore.Dtos.Request.OrderRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Response.OrderResponse;
 import com.codewithdondamzy.onlinestore.Models.*;
-import com.codewithdondamzy.onlinestore.Repository.CartRepository;
-import com.codewithdondamzy.onlinestore.Repository.OrderItemsRepository;
-import com.codewithdondamzy.onlinestore.Repository.OrderRepository;
-import com.codewithdondamzy.onlinestore.Repository.ProductRepository;
+import com.codewithdondamzy.onlinestore.Repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,15 +18,18 @@ public class OrderServiceImpl implements OrderService {
     private final ProductRepository productRepository;
     private final CartService cartService;
     private final OrderItemsRepository orderItemsRepository;
-    private PaymentService paymentService;
-    private OrderRepository orderRepository;
+    private final PaymentService paymentService;
+    private final OrderRepository orderRepository;
+    private final PaymentRepository paymentRepository;
 
-    public OrderServiceImpl(PaymentService paymentService, CartRepository cartRepository, ProductRepository productRepository, CartService cartService, OrderItemsRepository orderItemsRepository) {
+    public OrderServiceImpl(PaymentService paymentService, CartRepository cartRepository, ProductRepository productRepository, CartService cartService, OrderItemsRepository orderItemsRepository, OrderRepository orderRepository, PaymentRepository paymentRepository) {
         this.paymentService = paymentService;
         this.cartRepository = cartRepository;
         this.productRepository = productRepository;
         this.cartService = cartService;
         this.orderItemsRepository = orderItemsRepository;
+        this.orderRepository = orderRepository;
+        this.paymentRepository = paymentRepository;
     }
 
     private List<OrderItem> createOrderItems(Order order,Cart cart) {
@@ -58,7 +58,12 @@ public class OrderServiceImpl implements OrderService {
         order.setOrderStatus(OrderStatus.PENDING);
         order.setDateCreated(LocalDate.now());
         order.setCustomer(cart.getCustomer());
+        order.setShippingInfo(new ShippingInfo());
+        order.setTotalPrice(cart.getTotalPrice());
+        order.setDateShipped(null);
+        order.setShippingId(UUID.randomUUID().toString());
         order.setTotalPrice(order.getTotalPrice());
+        order.setOrderItems(new HashSet<>(orderItemsRepository.findAll()));
         orderRepository.save(order);
         return order;
     }
@@ -89,6 +94,19 @@ public class OrderServiceImpl implements OrderService {
             orderItemsRepository.saveAll(orderItems);
 
             cartService.clearCartById(cart.getId());
+
+            Payment payment = Payment.builder()
+                    .order(savedOrder)
+                    .amount(savedOrder.getTotalPrice())
+                    .method(PaymentMethod.BANK_TRANSFER)
+                    .status(PaymentStatus.PENDING)
+                    .referenceNumber(UUID.randomUUID().toString())
+                    .date(LocalDate.now())
+                    .build();
+
+            paymentRepository.save(payment);
+
+            payment.setReferenceNumber(UUID.randomUUID().toString());
             orderResponse.setStatusCode(200);
             orderResponse.setMessage("Order placed successfully");
             orderResponse.setOrderId(savedOrder.getId());
@@ -133,13 +151,13 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderResponse getAllUserOrder(Long userId) {
+    public OrderResponse getAllCustomerOrder(Long customerId) {
         OrderResponse orderResponse = new OrderResponse();
         try {
-            List<Order> order = orderRepository.findOrderByCustomerId(userId);
+            List<Order> order = orderRepository.findOrderByCustomer_Id(customerId);
             if(order.isEmpty()) {
                 orderResponse.setStatusCode(400);
-                orderResponse.setMessage("Order Not Found,user has no order");
+                orderResponse.setMessage("Order Not Found,customer has no order");
                 return orderResponse;
             }
             List<Order> orderList = new ArrayList<>(order);

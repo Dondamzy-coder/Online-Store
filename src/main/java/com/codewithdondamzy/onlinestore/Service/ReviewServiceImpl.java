@@ -2,11 +2,14 @@ package com.codewithdondamzy.onlinestore.Service;
 
 import com.codewithdondamzy.onlinestore.Dtos.Request.ReviewRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Response.ReviewResponse;
+import com.codewithdondamzy.onlinestore.Models.Customer;
 import com.codewithdondamzy.onlinestore.Models.Products;
 import com.codewithdondamzy.onlinestore.Models.Review;
+import com.codewithdondamzy.onlinestore.Repository.CustomerRepository;
 import com.codewithdondamzy.onlinestore.Repository.ProductRepository;
 import com.codewithdondamzy.onlinestore.Repository.ReviewRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -18,6 +21,7 @@ import java.util.UUID;
 public class ReviewServiceImpl implements ReviewService {
     private final ReviewRepository reviewRepository;
     private final ProductRepository productRepository;
+    private final CustomerRepository customerRepository;
 
 
     @Override
@@ -52,30 +56,6 @@ public class ReviewServiceImpl implements ReviewService {
             reviewResponse.setMessage("There was an error while updating the review");
             return reviewResponse;
         }
-    }
-
-    @Override
-    public ReviewResponse createReview(ReviewRequest reviewRequest) {
-        ReviewResponse reviewResponse = new ReviewResponse();
-        Optional<Products> products = productRepository.findByName(reviewRequest
-                .getCreateProductRequest().getName());
-        if(products.isEmpty()) {
-            reviewResponse.setStatusCode(404);
-            reviewResponse.setMessage("Product Not Found");
-            return reviewResponse;
-        }
-            Products productToReview = products.get();
-        Review review = new Review();
-        review.setRating(reviewRequest.getRating());
-        review.setComment(reviewRequest.getComment());
-        review.setCreatedAt(LocalDateTime.now());
-        review.setProduct(productToReview);
-        review.setUUID(UUID.randomUUID().toString());
-        reviewRepository.save(review);
-        reviewResponse.setStatusCode(200);
-        reviewResponse.setMessage("Review Created");
-        reviewResponse.setData(review);
-        return reviewResponse;
     }
 
     @Override
@@ -121,5 +101,50 @@ public class ReviewServiceImpl implements ReviewService {
             reviewResponse.setMessage("There was an error while deleting the review");
             return reviewResponse;
         }
+    }
+
+    @Override
+    public ReviewResponse addReviewToProduct(Authentication authentication, ReviewRequest reviewRequest, String productName) {
+        ReviewResponse reviewResponse = new ReviewResponse();
+        String userName = authentication.getName();
+
+        try {
+            Customer customer = customerRepository.findByUserName(userName);
+            if(!customer.getName().equals(userName)) {
+                reviewResponse.setStatusCode(404);
+                reviewResponse.setMessage("Customer Not Found");
+                return reviewResponse;
+            }
+            Optional<Products> products = productRepository.findByName(productName);
+            if(products.isEmpty()) {
+                reviewResponse.setStatusCode(401);
+                reviewResponse.setMessage("Product Not Found, cannot add review");
+                return reviewResponse;
+            }
+            Products productsToAdd = products.get();
+
+            Review review = Review.builder()
+                    .customer(customer)
+                    .product(productsToAdd)
+                    .rating(reviewRequest.getRating())
+                    .comment(reviewRequest.getComment())
+                    .UUID(UUID.randomUUID().toString())
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+            productsToAdd.getReviews().add(review);
+            productRepository.save(productsToAdd);
+            reviewRepository.save(review);
+            reviewResponse.setStatusCode(200);
+            reviewResponse.setMessage("Review added successfully!!");
+            reviewResponse.setData(review);
+            return reviewResponse;
+        } catch (Exception e) {
+            reviewResponse.setStatusCode(500);
+            reviewResponse.setMessage("Unable to add review at the moment, pls try again!!");
+            return reviewResponse;
+        }
+
+
     }
 }

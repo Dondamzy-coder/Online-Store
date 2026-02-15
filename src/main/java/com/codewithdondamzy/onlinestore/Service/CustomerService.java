@@ -26,7 +26,7 @@ public interface CustomerService {
 
     GetCustomerResponse getCustomerByEmailAddress(Authentication authentication);
 
-    UpdateCustomerResponse updateCustomer(CreateCustomerRequest createCustomerRequest,Authentication authentication);
+    UpdateCustomerResponse updateCustomerById(CreateCustomerRequest createCustomerRequest,Long id);
 
     DeleteCustomerResponse deleteCustomer(Long id);
 

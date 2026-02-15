@@ -9,5 +9,5 @@ public class CreateCustomerResponse {
     private String jwtToken;
     private int statusCode;
     private String message;
-    private CreateCustomerRequest customerRequest;
+    private Object data;
 }
