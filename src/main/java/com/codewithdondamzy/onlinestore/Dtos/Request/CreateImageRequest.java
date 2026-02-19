@@ -1,14 +1,11 @@
 package com.codewithdondamzy.onlinestore.Dtos.Request;
 
 import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.sql.Blob;
 
 @Data
 public class CreateImageRequest {
-    private String fileName;
-    private String fileType;
-    private Blob image;
-    private String downloadUrl;
-    private String UUID;
+    private MultipartFile file;
 }

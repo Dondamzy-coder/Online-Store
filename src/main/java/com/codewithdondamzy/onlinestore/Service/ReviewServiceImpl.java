@@ -144,7 +144,5 @@ public class ReviewServiceImpl implements ReviewService {
             reviewResponse.setMessage("Unable to add review at the moment, pls try again!!");
             return reviewResponse;
         }
-
-
     }
 }

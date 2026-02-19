@@ -43,6 +43,7 @@ public class Customer {
     private List<Order> orders;
 
     @OneToMany(mappedBy = "customer",cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("customer-review")
     private List<Review> review;
     private boolean isActive;
     private LocalDate createdAt;

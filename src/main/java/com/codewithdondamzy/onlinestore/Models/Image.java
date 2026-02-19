@@ -19,7 +19,8 @@ public class Image {
     private String fileName;
     private String fileType;
     @Lob
-    private Blob image;
+    @Basic(fetch = FetchType.LAZY)
+    private byte[] image;
 
     private String downloadUrl;
     private String UUID;

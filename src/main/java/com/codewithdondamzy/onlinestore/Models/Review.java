@@ -28,6 +28,7 @@ public class Review {
     private Products product;
     @ManyToOne
     @JoinColumn(name = "customer_id")
+    @JsonBackReference("customer-review")
     private Customer customer;
 
 }

@@ -9,6 +9,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.List;
+
 @RestController
 @RequestMapping("/OnlineStore")
 public class ImageController {
@@ -18,26 +21,24 @@ public class ImageController {
         this.imageService = imageService;
     }
 
-
     @PostMapping("/createImage")
-    public ResponseEntity<?> createImage(@RequestBody CreateImageRequest createImageRequest) {
-        ImageResponse image = imageService.createImage(createImageRequest);
-        return new ResponseEntity<>(null, HttpStatus.OK);
+    public ResponseEntity<?> createImage(@RequestParam("file") MultipartFile file) throws IOException {
+        return ResponseEntity.ok(imageService.createImage(file));
+    }
+
+    @PostMapping("/saveImages")
+    public ResponseEntity<?> saveImages(@RequestParam List<MultipartFile> files, @RequestParam Long productId) {
+        return ResponseEntity.ok(imageService.saveImages(files, productId));
     }
 
     @GetMapping("/getImageByFileName")
     public ResponseEntity<?> getImageByFileName(@RequestParam("fileName") String fileName) {
-        return new ResponseEntity<>(imageService.getImageByFileName(fileName), HttpStatus.OK);
+        return ResponseEntity.ok(imageService.getImageByFileName(fileName));
     }
 
     @GetMapping("/getImageByUrl")
     public ResponseEntity<?> getImageByUrl(@RequestParam("url") String url) {
-        return new ResponseEntity<>(imageService.getImageByUrl(url), HttpStatus.OK);
-    }
-
-    @GetMapping("/getImageByProductName")
-    public ResponseEntity<?> getImageByName(@RequestParam("productName") String productName) {
-        return new ResponseEntity<>(imageService.getImageByName(productName), HttpStatus.OK);
+        return ResponseEntity.ok(imageService.getImageByUrl(url));
     }
 
     @DeleteMapping("/deleteImageById/{id}")
