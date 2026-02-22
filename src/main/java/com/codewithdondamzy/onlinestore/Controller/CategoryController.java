@@ -4,6 +4,7 @@ import com.codewithdondamzy.onlinestore.Dtos.Request.CreateCategoryRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Response.CategoryResponse;
 import com.codewithdondamzy.onlinestore.Service.CategoryService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,27 +15,37 @@ public class CategoryController {
     public CategoryController(CategoryService categoryService) {
         this.categoryService = categoryService;
     }
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/createCategory")
     public CategoryResponse createCategory(@RequestBody CreateCategoryRequest createCategoryRequest) {
         return categoryService.createCategory(createCategoryRequest);
     }
+
+    @PreAuthorize("permitAll()")
     @GetMapping("/getCategoryByName")
     public CategoryResponse getCategoryByName(@RequestParam String name) {
         return categoryService.getCategoryByName(name);
     }
+
+    @PreAuthorize("permitAll()")
     @GetMapping("/getAllCategories")
     public CategoryResponse getAllCategories() {
         return categoryService.getAllCategories();
     }
+
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PutMapping("/updateCategory")
     public CategoryResponse updateCategory(@RequestBody CreateCategoryRequest createCategoryRequest,@RequestParam String name) {
         return categoryService.updateCategory(createCategoryRequest,name);
     }
+
+    @PreAuthorize("hasAuthority('ADMIN')")
     @DeleteMapping("/deleteCategoryByName")
     public CategoryResponse deleteCategoryByName(@RequestParam String name) {
         return categoryService.deleteCategoryByName(name);
     }
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @DeleteMapping("/deleteCategoryById/{id}")
     public ResponseEntity<?> deleteCategoryById(@PathVariable Long id) {
         return ResponseEntity.ok().body(categoryService.deleteCategoryById(id));

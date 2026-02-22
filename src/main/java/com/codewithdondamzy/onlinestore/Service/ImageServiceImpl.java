@@ -21,13 +21,11 @@ import java.util.UUID;
 public class ImageServiceImpl implements ImageService {
     private final ImageRepository imageRepository;
     private final ProductService  productService;
-    private final ImageService imageService;
     private final ProductRepository productRepository;
 
-    public ImageServiceImpl(ImageRepository imageRepository, ProductService productService, ImageService imageService, ProductRepository productRepository) {
+    public ImageServiceImpl(ImageRepository imageRepository, ProductService productService, ProductRepository productRepository) {
         this.imageRepository = imageRepository;
         this.productService = productService;
-        this.imageService = imageService;
         this.productRepository = productRepository;
     }
     @Override
@@ -46,6 +44,9 @@ public class ImageServiceImpl implements ImageService {
                 .image(file.getBytes())
                 .UUID(UUID.randomUUID().toString())
                 .build();
+        String buildDownloadUrl = "/OnlineStore/images/image/download/";
+        String downloadUrl = buildDownloadUrl+newImage.getUUID();
+        newImage.setDownloadUrl(downloadUrl);
         imageRepository.save(newImage);
         imageResponse.setStatusCode(200);
         imageResponse.setMessage("Image created successfully");
@@ -96,15 +97,16 @@ public class ImageServiceImpl implements ImageService {
 
                 newProductImages.add(newImage);
 
+                imageResponse.setStatusCode(200);
+                imageResponse.setMessage("Images saved successfully");
                 return imageResponse;
             } catch (IOException e) {
+                e.printStackTrace();
                 imageResponse.setStatusCode(500);
                 imageResponse.setMessage("Image saving failed,please try again later");
                 return imageResponse;
             }
         }
-        imageResponse.setStatusCode(200);
-        imageResponse.setMessage("Images saved successfully");
         return imageResponse;
     }
 
@@ -173,15 +175,24 @@ public class ImageServiceImpl implements ImageService {
     public ImageResponse updateImage(MultipartFile file, Long id) {
         ImageResponse imageResponse = new ImageResponse();
         try {
-            Image image = imageRepository.findById(id).orElse(null);
-            assert image != null;
-            image.setFileName(file.getOriginalFilename());
-            image.setFileType(file.getContentType());
-            image.setImage(file.getBytes());
-            imageRepository.save(image);
+            Optional<Image> image = imageRepository.findById(id);
+            if(image.isEmpty()) {
+                imageResponse.setStatusCode(404);
+                imageResponse.setMessage("Image with id " + id + " not found");
+                return imageResponse;
+            }
+          Image imageToUpdate = image.get();
+           imageToUpdate.setFileName(file.getOriginalFilename());
+            imageToUpdate.setFileType(file.getContentType());
+            imageToUpdate.setImage(file.getBytes());
+            imageRepository.save(imageToUpdate);
+            imageResponse.setStatusCode(200);
+            imageResponse.setMessage("Image with id " + id + " updated successfully");
+            return imageResponse;
         } catch (IOException e) {
-            throw new RuntimeException(e.getMessage());
+            imageResponse.setStatusCode(500);
+            imageResponse.setMessage("Internal Server Error");
+            return imageResponse;
         }
-        return imageResponse;
     }
 }

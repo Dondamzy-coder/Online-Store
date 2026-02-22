@@ -15,6 +15,7 @@ public class PaymentController {
     public PaymentController(@Qualifier("paypalPaymentService") PaymentService paymentService) {
         this.paymentService = paymentService;
     }
+
     @GetMapping("/createPayment")
     public ResponseEntity<PaymentResponse> createPayment(@RequestBody PaymentRequest paymentRequest) {
         return  ResponseEntity.ok(paymentService.createPayment(paymentRequest));
@@ -22,5 +23,4 @@ public class PaymentController {
     public ResponseEntity<PaymentResponse> paymentSuccess(@RequestParam String reference) {
         return  ResponseEntity.ok(paymentService.paymentSuccess(reference));
     }
-
 }

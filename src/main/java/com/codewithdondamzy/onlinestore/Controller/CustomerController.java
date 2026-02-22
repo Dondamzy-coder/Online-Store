@@ -44,6 +44,7 @@ public class CustomerController {
         return ResponseEntity.ok(customerService.customerLogin(createCustomerLoginRequest));
     }
 
+    @PreAuthorize("hasAuthority('CUSTOMER')")
     @PutMapping("/changeCustomerPassword")
     public ResponseEntity<?> changePassword(@RequestBody ChangePasswordRequest changePasswordRequest, Authentication authentication) {
        UpdateCustomerResponse customer = customerService.changePassword(changePasswordRequest,authentication);

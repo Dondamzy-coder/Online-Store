@@ -24,18 +24,20 @@ public class ReviewController {
         return ResponseEntity.ok(reviewService.addReviewToProduct(authentication, reviewRequest, productName));
     }
 
+    @PreAuthorize("hasAuthority('CUSTOMER')")
     @PutMapping("/updateReview/{reviewId}")
     public ResponseEntity<?> updateReview(@PathVariable Long reviewId, @RequestBody ReviewRequest reviewRequest) {
         return ResponseEntity.ok(reviewService.updateReview(reviewRequest, reviewId));
     }
 
-
+    @PreAuthorize("hasAuthority('CUSTOMER')")
     @GetMapping("/getReviewById/{reviewId}")
     public ResponseEntity<?> getReview(@PathVariable Long reviewId) {
         return ResponseEntity.ok(reviewService.getReview(reviewId));
     }
 
 
+    @PreAuthorize("hasAuthority('CUSTOMER')")
     @DeleteMapping("/deleteProductReview/{reviewId}")
     public ResponseEntity<?> deleteProductReview(@PathVariable Long reviewId) {
         return ResponseEntity.ok(reviewService.deleteReview(reviewId));
