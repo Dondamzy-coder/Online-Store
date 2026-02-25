@@ -28,6 +28,7 @@ public class Order {
     @OneToOne(mappedBy = "order",cascade = CascadeType.ALL)
     private ShippingInfo shippingInfo;
 
+    private String paymentReference;
     @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus;
     private String shippingId;
@@ -40,4 +41,6 @@ public class Order {
     private Set<OrderItem> orderItems = new HashSet<>();
     @OneToOne(mappedBy = "order",cascade = CascadeType.ALL)
     private Payment payment;
+
+    private PaymentStatus paymentStatus;
 }

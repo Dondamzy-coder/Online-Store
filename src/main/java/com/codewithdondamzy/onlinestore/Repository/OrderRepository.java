@@ -16,4 +16,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Optional<Order> findOrderByDateCreated(LocalDate dateCreated);
 
     List<Order> findOrderByCustomer_Id(Long customerId);
+
+    Optional<Order> findByPaymentReference(String reference);
 }

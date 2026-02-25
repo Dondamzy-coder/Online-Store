@@ -6,6 +6,8 @@ import lombok.Data;
 
 @Data
 public class PaymentResponse {
+    private int statusCode;
+    private String authorizationUrl;
     private String referenceNumber;
     private String description;
     private PaymentMethod method;

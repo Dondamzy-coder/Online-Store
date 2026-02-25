@@ -2,17 +2,37 @@ package com.codewithdondamzy.onlinestore.Service;
 
 import com.codewithdondamzy.onlinestore.Dtos.Request.PaymentRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Response.PaymentResponse;
+import com.codewithdondamzy.onlinestore.Models.Order;
 import com.codewithdondamzy.onlinestore.Models.Payment;
 import com.codewithdondamzy.onlinestore.Models.PaymentMethod;
 import com.codewithdondamzy.onlinestore.Models.PaymentStatus;
+import com.codewithdondamzy.onlinestore.Repository.OrderRepository;
 import com.codewithdondamzy.onlinestore.Repository.PaymentRepository;
+import org.springframework.stereotype.Service;
 
+import java.net.http.HttpHeaders;
+import java.util.Map;
 
+@Service
 public class StripePaymentService implements PaymentService {
+    private OrderRepository orderRepository;
     private PaymentRepository paymentRepository;
     public StripePaymentService(PaymentRepository paymentRepository) {
         this.paymentRepository = paymentRepository;
     }
+
+    @Override
+    public PaymentResponse initializePayment(Long orderId) {
+        PaymentResponse paymentResponse = new PaymentResponse();
+        Order order = orderRepository.findOrderById(orderId).orElseThrow(() -> new RuntimeException("Order Not Found"));
+        return null;
+    }
+
+    @Override
+    public void verifyPayment(Map<String, Object> payload) {
+
+    }
+
     @Override
     public PaymentResponse createPayment(PaymentRequest paymentRequest) {
         Payment payment = new Payment();
