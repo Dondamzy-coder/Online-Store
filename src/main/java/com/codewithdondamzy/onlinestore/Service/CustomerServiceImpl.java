@@ -255,7 +255,9 @@ public class CustomerServiceImpl implements CustomerService {
                 CartItem cartItem = existingItem.get();
                 cartItem.setQuantity(cartItem.getQuantity() + quantity);
                 cartItem.calculateTotalPrice();
+                cart.setTotalPrice(cartItem.getTotalPrice());
                 cartItemRepository.save(cartItem);
+                cartRepository.save(cart);
             } else {
                 // Create new cart items
                 CartItem cartItem = new CartItem();
@@ -267,10 +269,6 @@ public class CustomerServiceImpl implements CustomerService {
                 cartItemRepository.save(cartItem);
                 cart.addItem(cartItem);
             }
-
-            // 4. Recalculate cart total
-            cart.setTotalPrice(cart.getTotalPrice());
-            cartRepository.save(cart);
 
             response.setStatusCode(200);
             response.setMessage("Product added to cart successfully");

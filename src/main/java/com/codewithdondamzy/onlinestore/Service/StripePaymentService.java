@@ -29,8 +29,8 @@ public class StripePaymentService implements PaymentService {
     }
 
     @Override
-    public void verifyPayment(Map<String, Object> payload) {
-
+    public PaymentResponse verifyPayment(Map<String, Object> payload) {
+        return null;
     }
 
     @Override

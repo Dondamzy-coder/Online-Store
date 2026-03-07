@@ -58,7 +58,7 @@ public class CustomerController {
         return ResponseEntity.ok(newCustomerAddress);
     }
 
-    @PreAuthorize("hasAuthority('CUSTOMER')")
+    @PreAuthorize("hasAnyAuthority('CUSTOMER','ADMIN')")
     @PutMapping("/addItemToCart/{productId}/{cartId}/")
     public ResponseEntity<?> addItemToCart(@PathVariable Long productId,@PathVariable Long cartId,@RequestParam int quantity) {
         return ResponseEntity.ok(customerService.addItemToCart(productId,cartId,quantity));
@@ -104,7 +104,7 @@ public class CustomerController {
         return ResponseEntity.ok(review);
     }
 
-    @PreAuthorize("hasAuthority('CUSTOMER')")
+    @PreAuthorize("hasAnyAuthority('CUSTOMER', 'ADMIN')")
     @PutMapping("/placeOrder/{customerId}")
     public ResponseEntity<OrderResponse> PlaceOrder(@RequestBody OrderRequest orderRequest, @PathVariable Long customerId) {
         return ResponseEntity.ok(orderService.placeOrder(orderRequest,customerId));

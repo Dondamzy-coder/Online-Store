@@ -10,10 +10,12 @@ import org.springframework.security.crypto.bcrypt.BCrypt;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @ToString(exclude = "addresses")
 @Entity
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -24,7 +26,7 @@ public class Customer {
     private String name;
 
 
-    @OneToMany(mappedBy = "customer",cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Address> addresses = new ArrayList<>();
 
@@ -38,11 +40,11 @@ public class Customer {
     private String userName;
     private String UUID;
     private String phoneNumber;
-    @OneToMany(mappedBy = "customer",cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Order> orders;
 
-    @OneToMany(mappedBy = "customer",cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference("customer-review")
     private List<Review> review;
     private boolean isActive;
@@ -60,6 +62,18 @@ public class Customer {
 //    }
 
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Customer)) return false;
+        Customer customer = (Customer) o;
+        return id != null && id.equals(customer.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 //    private static boolean isValidPassword(String password) {
 //        if(password == null) {
 //            return false;

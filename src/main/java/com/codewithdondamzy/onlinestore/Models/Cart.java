@@ -6,9 +6,11 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 
 @ToString(exclude = "customer")
-@Data
+@Getter
+@Setter
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
@@ -23,7 +25,7 @@ public class Cart {
 
 
     @OneToOne
-    @JoinColumn(name = "customer_id",nullable = false)
+    @JoinColumn(name = "customer_id", nullable = false)
     @JsonBackReference
     private Customer customer;
 
@@ -54,4 +56,16 @@ public class Cart {
                 }).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Cart)) return false;
+        Cart cart = (Cart) o;
+        return id != null && id.equals(cart.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

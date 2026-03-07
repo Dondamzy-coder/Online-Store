@@ -6,6 +6,7 @@ import com.codewithdondamzy.onlinestore.Service.PaymentService;
 import com.codewithdondamzy.onlinestore.Service.PaystackPaymentService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -13,18 +14,15 @@ import org.springframework.web.bind.annotation.*;
 public class PaymentController {
     private final PaymentService paymentService;
 
-    private final PaystackPaymentService paystackPaymentService;
-
     public PaymentController(@Qualifier("paystackPaymentService") PaymentService paymentService, PaystackPaymentService paystackPaymentService) {
         this.paymentService = paymentService;
-        this.paystackPaymentService = paystackPaymentService;
     }
 
+    @PreAuthorize("hasAnyAuthority('CUSTOMER','ADMIN')")
     @PostMapping("/initializePayment/{orderId}")
     public ResponseEntity<?> initializePayment(@PathVariable Long orderId) {
         return ResponseEntity.ok(paymentService.initializePayment(orderId));
     }
-
 
     @GetMapping("/createPayment")
     public ResponseEntity<PaymentResponse> createPayment(@RequestBody PaymentRequest paymentRequest) {

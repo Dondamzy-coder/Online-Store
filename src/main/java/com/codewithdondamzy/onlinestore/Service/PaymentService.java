@@ -9,7 +9,7 @@ public interface PaymentService {
 
    PaymentResponse initializePayment(Long orderId);
 
-    void verifyPayment(Map<String, Object> payload);
+    PaymentResponse verifyPayment(Map<String, Object> payload);
 
     PaymentResponse createPayment (PaymentRequest paymentRequest);
 

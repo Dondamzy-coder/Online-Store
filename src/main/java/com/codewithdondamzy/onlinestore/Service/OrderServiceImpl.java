@@ -21,8 +21,9 @@ public class OrderServiceImpl implements OrderService {
     private final PaymentService paymentService;
     private final OrderRepository orderRepository;
     private final PaymentRepository paymentRepository;
+    private final EmailService emailService;
 
-    public OrderServiceImpl(PaymentService paymentService, CartRepository cartRepository, ProductRepository productRepository, CartService cartService, OrderItemsRepository orderItemsRepository, OrderRepository orderRepository, PaymentRepository paymentRepository) {
+    public OrderServiceImpl(PaymentService paymentService, CartRepository cartRepository, ProductRepository productRepository, CartService cartService, OrderItemsRepository orderItemsRepository, OrderRepository orderRepository, PaymentRepository paymentRepository, EmailService emailService) {
         this.paymentService = paymentService;
         this.cartRepository = cartRepository;
         this.productRepository = productRepository;
@@ -30,6 +31,7 @@ public class OrderServiceImpl implements OrderService {
         this.orderItemsRepository = orderItemsRepository;
         this.orderRepository = orderRepository;
         this.paymentRepository = paymentRepository;
+        this.emailService = emailService;
     }
 
     private List<OrderItem> createOrderItems(Order order,Cart cart) {
@@ -86,13 +88,14 @@ public class OrderServiceImpl implements OrderService {
                 return orderResponse;
             }
             Order order = createOrder(cart);
+
             List<OrderItem> orderItems = createOrderItems(order,cart);
 
             order.setOrderItems(new HashSet<>(orderItems));
             order.setTotalPrice(calculateTotalPrice(orderItems));
             Order savedOrder = orderRepository.save(order);
-            orderItemsRepository.saveAll(orderItems);
-
+            emailService.sendEmailForSuccessfulOrder(order.getCustomer().getEmail()
+                    ,order.getCustomer().getName(),order.getId());
             cartService.clearCartById(cart.getId());
 
             Payment payment = Payment.builder()
@@ -109,6 +112,8 @@ public class OrderServiceImpl implements OrderService {
             payment.setReferenceNumber(UUID.randomUUID().toString());
             orderResponse.setStatusCode(200);
             orderResponse.setMessage("Order placed successfully");
+            orderResponse.setTotalAmount(savedOrder.getTotalPrice());
+            orderResponse.setOrderId(customerId);
             orderResponse.setOrderId(savedOrder.getId());
             return orderResponse;
         } catch (Exception e) {
@@ -125,11 +130,13 @@ public class OrderServiceImpl implements OrderService {
         if(orderItems != null) {
             for (OrderItem orderItem : orderItems) {
                 orderItem.getPrice().multiply(BigDecimal.valueOf(orderItem.getQuantity()));
+                totalPrice = totalPrice.add(orderItem.getPrice());
                 break;
             }
         }
         return totalPrice;
     }
+
     @Override
     public OrderResponse getOrderById(Long orderId) {
         OrderResponse orderResponse = new OrderResponse();
@@ -145,6 +152,30 @@ public class OrderServiceImpl implements OrderService {
             return orderResponse;
         } catch (Exception e) {
             orderResponse.setStatusCode(500);
+            orderResponse.setMessage("Internal server error,please try again later!!");
+            return orderResponse;
+        }
+    }
+
+    @Override
+    public OrderResponse deleteOrderById(Long orderId) {
+        OrderResponse orderResponse  = new OrderResponse();
+        try {
+            Optional<Order> order = orderRepository.findOrderById(orderId);
+            if(order.isEmpty()) {
+                orderResponse.setStatusCode(404);
+                orderResponse.setMessage("Order Not Found");
+                return orderResponse;
+            }
+            Order orderToDelete = order.get();
+            orderRepository.delete(orderToDelete);
+            orderResponse.setStatusCode(200);
+            orderResponse.setMessage("Order deleted successfully!");
+            orderResponse.setData(String.valueOf(orderToDelete));
+            return orderResponse;
+        } catch (Exception e) {
+            orderResponse.setStatusCode(500);
+            orderResponse.setOrderId(orderId);
             orderResponse.setMessage("Internal server error,please try again later!!");
             return orderResponse;
         }
