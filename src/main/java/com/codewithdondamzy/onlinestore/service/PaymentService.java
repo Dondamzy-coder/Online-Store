@@ -1,4 +1,4 @@
-package com.codewithdondamzy.onlinestore.Service;
+package com.codewithdondamzy.onlinestore.service;
 
 import com.codewithdondamzy.onlinestore.Dtos.Request.PaymentRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Response.PaymentResponse;

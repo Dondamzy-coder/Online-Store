@@ -25,7 +25,7 @@ public class Order {
     private LocalDate dateCreated;
     private LocalDate dateShipped;
     private BigDecimal totalPrice;
-    private int orderNumber;
+    private String orderNumber;
     @OneToOne(mappedBy = "order",cascade = CascadeType.ALL)
     private ShippingInfo shippingInfo;
 

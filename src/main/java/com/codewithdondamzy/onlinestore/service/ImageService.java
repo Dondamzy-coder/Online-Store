@@ -1,9 +1,6 @@
-package com.codewithdondamzy.onlinestore.Service;
+package com.codewithdondamzy.onlinestore.service;
 
-import com.codewithdondamzy.onlinestore.Dtos.Request.CreateImageRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Response.ImageResponse;
-import com.codewithdondamzy.onlinestore.Models.Image;
-import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;

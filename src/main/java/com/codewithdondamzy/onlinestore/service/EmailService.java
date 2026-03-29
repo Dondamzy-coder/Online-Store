@@ -1,4 +1,4 @@
-package com.codewithdondamzy.onlinestore.Service;
+package com.codewithdondamzy.onlinestore.service;
 
 import jakarta.mail.MessagingException;
 

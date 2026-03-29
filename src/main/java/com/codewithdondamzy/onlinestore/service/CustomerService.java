@@ -1,13 +1,11 @@
-package com.codewithdondamzy.onlinestore.Service;
+package com.codewithdondamzy.onlinestore.service;
 
 import com.codewithdondamzy.onlinestore.Dtos.Request.ChangePasswordRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Request.CreateCustomerLoginRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Request.CreateCustomerRequest;
-import com.codewithdondamzy.onlinestore.Dtos.Response.CreateCustomerResponse;
-import com.codewithdondamzy.onlinestore.Dtos.Response.DeleteCustomerResponse;
-import com.codewithdondamzy.onlinestore.Dtos.Response.GetCustomerResponse;
-import com.codewithdondamzy.onlinestore.Dtos.Response.UpdateCustomerResponse;
-import com.codewithdondamzy.onlinestore.Models.Address;
+import com.codewithdondamzy.onlinestore.Dtos.Request.ReviewRequest;
+import com.codewithdondamzy.onlinestore.Dtos.Response.*;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 
 public interface CustomerService {
@@ -22,7 +20,7 @@ public interface CustomerService {
 
     UpdateCustomerResponse addItemToCart(Long productId, Long cartId, int quantity);
 
-    GetCustomerResponse getAllCustomers();
+    GetCustomerResponse getAllCustomers(Pageable pageable);
 
     GetCustomerResponse getCustomerByEmailAddress(Authentication authentication);
 
@@ -30,9 +28,10 @@ public interface CustomerService {
 
     DeleteCustomerResponse deleteCustomer(Long id);
 
-    GetCustomerResponse getAllOrders();
+    GetCustomerResponse getAllOrders(Pageable pageable);
 
-    UpdateCustomerResponse addReview(Long reviewId,Long productId);
+    ReviewResponse addReviewToProduct(Authentication authentication, ReviewRequest reviewRequest, String productName);
+
 
     UpdateCustomerResponse updateReview(Long productId);
 

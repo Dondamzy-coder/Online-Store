@@ -1,30 +1,26 @@
-package com.codewithdondamzy.onlinestore.Service;
+package com.codewithdondamzy.onlinestore.service;
 
-import com.codewithdondamzy.onlinestore.Dtos.Request.AddressRequest;
-import com.codewithdondamzy.onlinestore.Dtos.Request.ChangePasswordRequest;
-import com.codewithdondamzy.onlinestore.Dtos.Request.CreateCustomerLoginRequest;
-import com.codewithdondamzy.onlinestore.Dtos.Request.CreateCustomerRequest;
-import com.codewithdondamzy.onlinestore.Dtos.Response.CreateCustomerResponse;
-import com.codewithdondamzy.onlinestore.Dtos.Response.DeleteCustomerResponse;
-import com.codewithdondamzy.onlinestore.Dtos.Response.GetCustomerResponse;
-import com.codewithdondamzy.onlinestore.Dtos.Response.UpdateCustomerResponse;
+import com.codewithdondamzy.onlinestore.Dtos.Request.*;
+import com.codewithdondamzy.onlinestore.Dtos.Response.*;
 import com.codewithdondamzy.onlinestore.Models.*;
 import com.codewithdondamzy.onlinestore.Repository.*;
 import com.codewithdondamzy.onlinestore.config.JwtService;
 import com.codewithdondamzy.onlinestore.config.UserPrincipal;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCrypt;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -231,7 +227,6 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     @Transactional
     public UpdateCustomerResponse addItemToCart(Long productId, Long cartId, int quantity) {
-
         UpdateCustomerResponse response = new UpdateCustomerResponse();
         // 1. Validate product
         try {
@@ -245,31 +240,35 @@ public class CustomerServiceImpl implements CustomerService {
             // 2. Validate cart
             Cart cart = cartRepository.findById(cartId)
                     .orElseThrow(() -> new RuntimeException("Cart not found"));
+//              check product stock against quantity
+            if(productToAdd.getInventory() < quantity) {
+                response.setStatusCode(400);
+                response.setMessage("Oops!!! Product is out of stock");
+                return response;
+            }
 
             // 3. Check if products already exist in carts
             Optional<CartItem> existingItem =
-                    cartItemRepository.findByCartAndProduct(cart,product);
+                    cartItemRepository.findByCartAndProduct(cart, Optional.of(productToAdd));
 
             if (existingItem.isPresent()) {
                 // Update quantity
                 CartItem cartItem = existingItem.get();
                 cartItem.setQuantity(cartItem.getQuantity() + quantity);
                 cartItem.calculateTotalPrice();
-                cart.setTotalPrice(cartItem.getTotalPrice());
                 cartItemRepository.save(cartItem);
                 cartRepository.save(cart);
             } else {
                 // Create new cart items
-                CartItem cartItem = new CartItem();
-                cartItem.setCart(cart);
-                cartItem.setProduct(productToAdd);
-                cartItem.setQuantity(quantity);
-                cartItem.setUnitPrice(productToAdd.getPrice());
-                cartItem.calculateTotalPrice();
-                cartItemRepository.save(cartItem);
-                cart.addItem(cartItem);
+                    CartItem cartItem = new CartItem();
+                    cartItem.setCart(cart);
+                    cartItem.setProduct(productToAdd);
+                    cartItem.setQuantity(quantity);
+                    cartItem.setUnitPrice(productToAdd.getPrice());
+                    cartItem.calculateTotalPrice();
+                    cartItemRepository.save(cartItem);
+                    cart.addItem(cartItem);
             }
-
             response.setStatusCode(200);
             response.setMessage("Product added to cart successfully");
             return response;
@@ -281,21 +280,32 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public GetCustomerResponse getAllCustomers() {
+    public GetCustomerResponse getAllCustomers(Pageable pageable) {
         GetCustomerResponse getCustomerResponse = new GetCustomerResponse();
         try {
-            List<Customer> customerList = customerRepository.findAll();
+
+            Page<Customer> customersPage = customerRepository.findAll(pageable);
+            List<Customer> customerList = customersPage.getContent();
             if (customerList.isEmpty()) {
                 getCustomerResponse.setStatusCode(400);
                 getCustomerResponse.setMessage("No customer found!!");
                 return getCustomerResponse;
             }
-            List<Customer> allCustomers = new ArrayList<>(customerList);
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("content", customerList);
+            responseData.put("totalPages", customersPage.getTotalPages());
+            responseData.put("totalElements", customersPage.getTotalElements());
+            responseData.put("currentPage", customersPage.getNumber());
+            responseData.put("pageSize", customersPage.getSize());
+
             getCustomerResponse.setStatusCode(200);
             getCustomerResponse.setMessage("Store customers gotten successfully");
-            getCustomerResponse.setCustomer(allCustomers);
+            getCustomerResponse.setCustomer(customerList);
+            getCustomerResponse.setData(responseData);
             return getCustomerResponse;
-        } catch (Exception e) {
+
+        }
+        catch (Exception e) {
             getCustomerResponse.setStatusCode(500);
             getCustomerResponse.setMessage("Invalid request");
         }
@@ -380,51 +390,72 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public GetCustomerResponse getAllOrders() {
+    public GetCustomerResponse getAllOrders(Pageable pageable) {
         GetCustomerResponse getCustomerResponse = new GetCustomerResponse();
-        List<Order> orderList = orderRepository.findAll();
-        if (orderList.isEmpty()) {
-            getCustomerResponse.setStatusCode(400);
-            getCustomerResponse.setMessage("No orders found!");
+        try {
+            Page<Order> orderPage = orderRepository.findAll(pageable);
+            List<Order> orderList = orderPage.getContent();
+            if (orderList.isEmpty()) {
+                getCustomerResponse.setStatusCode(400);
+                getCustomerResponse.setMessage("No orders found!");
+                return getCustomerResponse;
+            }
+
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("content", orderList);
+            responseData.put("totalPages", orderPage.getTotalPages());
+            responseData.put("totalElements", orderPage.getTotalElements());
+            responseData.put("currentPage", orderPage.getNumber());
+            responseData.put("pageSize", orderPage.getSize());
+            responseData.put("numberOfElements", orderPage.getNumberOfElements());
+
+            getCustomerResponse.setStatusCode(200);
+            getCustomerResponse.setMessage("Orders found successfully");
+            getCustomerResponse.setData(orderList);
             return getCustomerResponse;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        List<Order> allOrders = new ArrayList<>(orderList);
-        getCustomerResponse.setStatusCode(200);
-        getCustomerResponse.setMessage("Orders found successfully");
-        getCustomerResponse.setData(allOrders);
-        return getCustomerResponse;
     }
 
     @Override
-    public UpdateCustomerResponse addReview(Long reviewId, Long productId) {
-        UpdateCustomerResponse updateCustomerResponse = new UpdateCustomerResponse();
+    public ReviewResponse addReviewToProduct(Authentication authentication, ReviewRequest reviewRequest, String productName) {
+        ReviewResponse reviewResponse = new ReviewResponse();
         try {
-            Optional<Products> products = productRepository.findProductsById(productId);
-            List<Review> reviews = reviewRepository.findByProductId(productId);
-            if (products.isEmpty()) {
-                updateCustomerResponse.setStatusCode(400);
-                updateCustomerResponse.setMessage("No product found!");
-                return updateCustomerResponse;
+            String userName = authentication.getName();
+            Customer customer  = customerRepository.findByUserName(userName);
+            if(!customer.getUserName().equals(userName)) {
+                reviewResponse.setStatusCode(400);
+                reviewResponse.setMessage("Customer not found, cannot add review");
+                return reviewResponse;
             }
-            if (reviews.isEmpty()) {
-                updateCustomerResponse.setStatusCode(400);
-                updateCustomerResponse.setMessage("No review found!");
-                return updateCustomerResponse;
+            Optional<Products> productToReview = productRepository.findByName(productName);
+            if(productToReview.isEmpty()) {
+                reviewResponse.setStatusCode(400);
+                reviewResponse.setMessage("Product not found, cannot add review");
+                return reviewResponse;
             }
-            List<Review> allReviews = new ArrayList<>(reviews);
-            allReviews.addAll(reviews);
-            Products productToReview = products.get();
-            productToReview.setReviews(reviews);
-            updateCustomerResponse.setStatusCode(200);
-            updateCustomerResponse.setMessage("Review added to product successfully");
-            updateCustomerResponse.setData(productToReview);
-            return updateCustomerResponse;
+            List<Review> review = Collections.singletonList(Review.builder()
+                    .product(productToReview.get())
+                    .customer(customer)
+                    .UUID(UUID.randomUUID().toString())
+                    .rating(reviewRequest.getRating())
+                    .createdAt(LocalDateTime.now())
+                    .comment(reviewRequest.getComment())
+                    .build());
+            productToReview.get().setReviews(review);
+            reviewRepository.saveAll(review);
+            reviewResponse.setStatusCode(200);
+            reviewResponse.setMessage("Review added successfully");
+            return reviewResponse;
         } catch (Exception e) {
-            updateCustomerResponse.setStatusCode(500);
-            updateCustomerResponse.setMessage("Error adding review");
-            return updateCustomerResponse;
+            reviewResponse.setStatusCode(400);
+            reviewResponse.setMessage("Invalid request");
+            return reviewResponse;
         }
+
     }
+
 
     @Override
     public UpdateCustomerResponse updateReview(Long productId) {

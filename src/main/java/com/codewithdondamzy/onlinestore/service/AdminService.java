@@ -1,4 +1,4 @@
-package com.codewithdondamzy.onlinestore.Service;
+package com.codewithdondamzy.onlinestore.service;
 
 import com.codewithdondamzy.onlinestore.Dtos.Request.AdminRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Request.CreateCategoryRequest;

@@ -1,5 +1,5 @@
 package com.codewithdondamzy.onlinestore.config;
-import com.codewithdondamzy.onlinestore.Service.CustomUserDetailsService;
+import com.codewithdondamzy.onlinestore.service.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

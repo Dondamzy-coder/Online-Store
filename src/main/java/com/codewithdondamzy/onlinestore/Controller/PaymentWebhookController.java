@@ -1,6 +1,6 @@
 package com.codewithdondamzy.onlinestore.Controller;
 
-import com.codewithdondamzy.onlinestore.Service.PaymentService;
+import com.codewithdondamzy.onlinestore.service.PaymentService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

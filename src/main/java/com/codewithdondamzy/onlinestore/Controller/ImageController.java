@@ -1,10 +1,6 @@
 package com.codewithdondamzy.onlinestore.Controller;
 
-import com.codewithdondamzy.onlinestore.Dtos.Request.CreateImageRequest;
-import com.codewithdondamzy.onlinestore.Dtos.Response.ImageResponse;
-import com.codewithdondamzy.onlinestore.Models.Image;
-import com.codewithdondamzy.onlinestore.Service.ImageService;
-import org.springframework.http.HttpStatus;
+import com.codewithdondamzy.onlinestore.service.ImageService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -32,6 +28,12 @@ public class ImageController {
     @PostMapping("/saveImages")
     public ResponseEntity<?> saveImages(@RequestParam("files") List<MultipartFile> files, @RequestParam Long productId) {
         return ResponseEntity.ok(imageService.saveImages(files, productId));
+    }
+
+    @PreAuthorize("hasAuthority('CUSTOMER')")
+    @GetMapping("/getImageById/{id}")
+    public ResponseEntity<?> getImageById(@PathVariable Long id){
+        return ResponseEntity.ok(imageService.getImageById(id));
     }
 
     @PreAuthorize("hasAuthority('CUSTOMER')")

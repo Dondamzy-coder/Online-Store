@@ -1,7 +1,8 @@
 package com.codewithdondamzy.onlinestore.Controller;
 
 import com.codewithdondamzy.onlinestore.Dtos.Request.CreateProductRequest;
-import com.codewithdondamzy.onlinestore.Service.ProductService;
+import com.codewithdondamzy.onlinestore.service.ProductService;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -23,8 +24,8 @@ public class ProductController {
 
     @PreAuthorize("hasAuthority('CUSTOMER')")
     @GetMapping("/getProduct")
-    public ResponseEntity<?> getAllProducts() {
-        return ResponseEntity.ok(productService.getAllProducts());
+    public ResponseEntity<?> getAllProducts(Pageable pageable) {
+        return ResponseEntity.ok(productService.getAllProducts(pageable));
     }
 
     @PreAuthorize("hasAuthority('CUSTOMER')")
@@ -73,5 +74,16 @@ public class ProductController {
     @GetMapping("/getProductByBrandAndName")
     public ResponseEntity<?> getProductByBrandAndName(@RequestParam String brand, @RequestParam String name) {
         return ResponseEntity.ok(productService.getProductByBrandAndName(brand,name));
+    }
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @PutMapping("/updateProductPrice")
+    public ResponseEntity<?> updateProductPrice(@RequestBody CreateProductRequest createProductRequest,@PathVariable Long id) {
+        return ResponseEntity.ok(productService.updateProductPrice(createProductRequest,id));
+    }
+
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @PutMapping("/activateProduct/{productId}")
+    public ResponseEntity<?> activateProduct(@PathVariable Long productId) {
+        return ResponseEntity.ok(productService.activateProduct(productId));
     }
 }

@@ -1,6 +1,5 @@
-package com.codewithdondamzy.onlinestore.Service;
+package com.codewithdondamzy.onlinestore.service;
 
-import com.codewithdondamzy.onlinestore.Dtos.Request.CreateImageRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Response.ImageResponse;
 import com.codewithdondamzy.onlinestore.Models.Image;
 import com.codewithdondamzy.onlinestore.Models.Products;
@@ -9,10 +8,7 @@ import com.codewithdondamzy.onlinestore.Repository.ProductRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.sql.rowset.serial.SerialBlob;
-import javax.sql.rowset.serial.SerialException;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;

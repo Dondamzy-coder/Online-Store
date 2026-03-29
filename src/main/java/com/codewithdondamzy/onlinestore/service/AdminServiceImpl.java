@@ -1,4 +1,4 @@
-package com.codewithdondamzy.onlinestore.Service;
+package com.codewithdondamzy.onlinestore.service;
 
 import com.codewithdondamzy.onlinestore.Dtos.Request.AdminRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Request.CreateCategoryRequest;
@@ -11,7 +11,6 @@ import com.codewithdondamzy.onlinestore.Repository.AdminRepository;
 import com.codewithdondamzy.onlinestore.Repository.CategoryRepository;
 import com.codewithdondamzy.onlinestore.Repository.ProductRepository;
 import lombok.AllArgsConstructor;
-import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

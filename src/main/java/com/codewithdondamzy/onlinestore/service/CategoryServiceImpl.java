@@ -1,4 +1,4 @@
-package com.codewithdondamzy.onlinestore.Service;
+package com.codewithdondamzy.onlinestore.service;
 
 import com.codewithdondamzy.onlinestore.Dtos.Request.CreateCategoryRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Response.CategoryResponse;
@@ -8,12 +8,12 @@ import com.codewithdondamzy.onlinestore.Models.Products;
 import com.codewithdondamzy.onlinestore.Repository.CategoryRepository;
 import com.codewithdondamzy.onlinestore.Repository.ProductRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.beans.Transient;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+
 @Service
 public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
@@ -93,19 +93,29 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public CategoryResponse getAllCategories() {
+    public CategoryResponse getAllCategories(Pageable pageable) {
         CategoryResponse categoryResponse = new CategoryResponse();
-        List<Category> categories = categoryRepository.findAll();
-        if(categories.isEmpty()){
-            categoryResponse.setStatusCode(400);
-            categoryResponse.setMessage("Categories not found");
+        try {
+            Page<Category> categoryPage = categoryRepository.findAll(pageable);
+            List<Category> storeCategories = categoryRepository.findAll();
+            if(storeCategories.isEmpty()){
+                categoryResponse.setStatusCode(400);
+                categoryResponse.setMessage("Categories not found");
+                return categoryResponse;
+            }
+            Map<String,Object> responseData = new HashMap<>();
+            responseData.put("Content",categoryPage.getContent());
+            responseData.put("TotalPages",categoryPage.getTotalPages());
+            responseData.put("Total",categoryPage.getTotalElements());
+            responseData.put("CurrentPage",categoryPage);
+
+            categoryResponse.setStatusCode(200);
+            categoryResponse.setMessage("Categories found");
+            categoryResponse.setData(responseData);
             return categoryResponse;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        List<Category> storeCategories = new ArrayList(categories);
-        categoryResponse.setStatusCode(200);
-        categoryResponse.setMessage("Categories found");
-        categoryResponse.setData(storeCategories);
-        return categoryResponse;
     }
 
     @Override

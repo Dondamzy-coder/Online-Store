@@ -1,6 +1,6 @@
 package com.codewithdondamzy.onlinestore.Controller;
 
-import com.codewithdondamzy.onlinestore.Service.CartService;
+import com.codewithdondamzy.onlinestore.service.CartService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;

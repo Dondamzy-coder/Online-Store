@@ -1,15 +1,11 @@
 package com.codewithdondamzy.onlinestore.Controller;
 
-import com.codewithdondamzy.onlinestore.Dtos.Request.ChangePasswordRequest;
-import com.codewithdondamzy.onlinestore.Dtos.Request.CreateCustomerLoginRequest;
-import com.codewithdondamzy.onlinestore.Dtos.Request.CreateCustomerRequest;
-import com.codewithdondamzy.onlinestore.Dtos.Request.OrderRequest;
-import com.codewithdondamzy.onlinestore.Dtos.Response.GetCustomerResponse;
+import com.codewithdondamzy.onlinestore.Dtos.Request.*;
 import com.codewithdondamzy.onlinestore.Dtos.Response.OrderResponse;
 import com.codewithdondamzy.onlinestore.Dtos.Response.UpdateCustomerResponse;
-import com.codewithdondamzy.onlinestore.Service.CustomerService;
-import com.codewithdondamzy.onlinestore.Service.OrderService;
-import jakarta.annotation.security.PermitAll;
+import com.codewithdondamzy.onlinestore.service.CustomerService;
+import com.codewithdondamzy.onlinestore.service.OrderService;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -67,8 +63,8 @@ public class CustomerController {
 
     @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping("/getAllCustomers")
-    public ResponseEntity<?> getAllCustomers() {
-        return ResponseEntity.ok(customerService.getAllCustomers());
+    public ResponseEntity<?> getAllCustomers(Pageable pageable) {
+        return ResponseEntity.ok(customerService.getAllCustomers(pageable));
     }
 
 
@@ -92,21 +88,21 @@ public class CustomerController {
 
     @PreAuthorize("hasAnyAuthority('ADMIN','CUSTOMER')")
     @GetMapping("/getAllOrders")
-    public ResponseEntity<?> getAllOrders() {
-        GetCustomerResponse allOrders = customerService.getAllOrders();
-        return ResponseEntity.ok(allOrders);
+    public ResponseEntity<?> getAllOrders(Pageable pageable) {
+        return ResponseEntity.ok(customerService.getAllOrders(pageable));
     }
 
     @PreAuthorize("hasAuthority('CUSTOMER')")
-    @PutMapping("/addReview/{reviewId}/{productId}")
-    public ResponseEntity<?> addReview(@PathVariable Long reviewId,@PathVariable Long productId) {
-        UpdateCustomerResponse review = customerService.addReview(reviewId,productId);
-        return ResponseEntity.ok(review);
+    @PutMapping("/addReviewToProduct")
+    public ResponseEntity<?> addReviewToProduct(@RequestBody ReviewRequest reviewRequest,
+                                                Authentication authentication,@RequestParam String productName) {
+        return ResponseEntity.ok(customerService.addReviewToProduct(authentication,reviewRequest,productName));
     }
 
     @PreAuthorize("hasAnyAuthority('CUSTOMER', 'ADMIN')")
     @PutMapping("/placeOrder/{customerId}")
-    public ResponseEntity<OrderResponse> PlaceOrder(@RequestBody OrderRequest orderRequest, @PathVariable Long customerId) {
-        return ResponseEntity.ok(orderService.placeOrder(orderRequest,customerId));
+    public ResponseEntity<OrderResponse> PlaceOrder(@RequestBody OrderRequest orderRequest, @PathVariable Long customerId,
+                                                    Authentication authentication) {
+        return ResponseEntity.ok(orderService.placeOrder(orderRequest,customerId,authentication));
     }
 }

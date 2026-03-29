@@ -1,4 +1,4 @@
-package com.codewithdondamzy.onlinestore.Service;
+package com.codewithdondamzy.onlinestore.service;
 
 import com.codewithdondamzy.onlinestore.Dtos.Request.PaymentRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Response.PaymentResponse;
@@ -10,7 +10,6 @@ import com.codewithdondamzy.onlinestore.Repository.OrderRepository;
 import com.codewithdondamzy.onlinestore.Repository.PaymentRepository;
 import org.springframework.stereotype.Service;
 
-import java.net.http.HttpHeaders;
 import java.util.Map;
 
 @Service

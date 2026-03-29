@@ -2,7 +2,8 @@ package com.codewithdondamzy.onlinestore.Controller;
 
 import com.codewithdondamzy.onlinestore.Dtos.Request.CreateCategoryRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Response.CategoryResponse;
-import com.codewithdondamzy.onlinestore.Service.CategoryService;
+import com.codewithdondamzy.onlinestore.service.CategoryService;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -29,8 +30,8 @@ public class CategoryController {
 
     @PreAuthorize("permitAll()")
     @GetMapping("/getAllCategories")
-    public CategoryResponse getAllCategories() {
-        return categoryService.getAllCategories();
+    public CategoryResponse getAllCategories(Pageable pageable) {
+        return categoryService.getAllCategories(pageable);
     }
 
     @PreAuthorize("hasAuthority('ADMIN')")

@@ -1,10 +1,11 @@
-package com.codewithdondamzy.onlinestore.Service;
+package com.codewithdondamzy.onlinestore.service;
 
 
 import com.codewithdondamzy.onlinestore.Dtos.Request.OrderRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Response.OrderResponse;
 import com.codewithdondamzy.onlinestore.Models.*;
 import com.codewithdondamzy.onlinestore.Repository.*;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -72,13 +73,15 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional
     @Override
-    public OrderResponse placeOrder(OrderRequest orderRequest, Long customerId) {
+    public OrderResponse placeOrder(OrderRequest orderRequest, Long customerId, Authentication authentication) {
         OrderResponse orderResponse = new OrderResponse();
+        String userName = authentication.getName();
         try {
             Cart cart = cartRepository.getCartByCustomer_Id(customerId);
-            if (cart == null) {
+            Cart cart1 = cartRepository.getCartByCustomer_userName(userName);
+            if (cart == null && cart1 == null) {
                 orderResponse.setStatusCode(404);
-                orderResponse.setMessage("Cart not found for customer");
+                orderResponse.setMessage("Cart not found for customer with id: " + customerId + "and " + userName);
                 return orderResponse;
             }
 
@@ -93,7 +96,11 @@ public class OrderServiceImpl implements OrderService {
 
             order.setOrderItems(new HashSet<>(orderItems));
             order.setTotalPrice(calculateTotalPrice(orderItems));
+            order.setOrderNumber((UUID.randomUUID().toString()));
+            order.setCustomer(order.getCustomer());
+            order.setDateShipped(LocalDate.now());
             Order savedOrder = orderRepository.save(order);
+
             emailService.sendEmailForSuccessfulOrder(order.getCustomer().getEmail()
                     ,order.getCustomer().getName(),order.getId());
             cartService.clearCartById(cart.getId());
@@ -119,7 +126,7 @@ public class OrderServiceImpl implements OrderService {
         } catch (Exception e) {
             e.printStackTrace();
             orderResponse.setStatusCode(500);
-            orderResponse.setMessage(e.getMessage());
+            orderResponse.setMessage("Internal server error,please try again later!!");
             return orderResponse;
         }
     }

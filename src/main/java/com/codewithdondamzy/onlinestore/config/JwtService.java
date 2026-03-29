@@ -35,7 +35,7 @@ import static io.jsonwebtoken.Jwts.parser;
                     .claims(claims)
                     .subject(userDetails.getUsername())
                     .issuedAt(new Date(System.currentTimeMillis()))
-                    .expiration(new Date(System.currentTimeMillis() + 60 * 1000))  // 1 minute
+                    .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 10))  // 10 days
                     .signWith(getKey(), Jwts.SIG.HS512)
                     .compact();
         }

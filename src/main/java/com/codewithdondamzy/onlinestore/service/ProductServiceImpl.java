@@ -1,27 +1,19 @@
-package com.codewithdondamzy.onlinestore.Service;
+package com.codewithdondamzy.onlinestore.service;
 
-import com.codewithdondamzy.onlinestore.Dtos.Request.CartItemRequest;
-import com.codewithdondamzy.onlinestore.Dtos.Request.CreateCategoryRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Request.CreateProductRequest;
-import com.codewithdondamzy.onlinestore.Dtos.Request.ReviewRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Response.CreateProductResponse;
 import com.codewithdondamzy.onlinestore.Dtos.Response.DeleteProductResponse;
 import com.codewithdondamzy.onlinestore.Dtos.Response.GetProductResponse;
 import com.codewithdondamzy.onlinestore.Dtos.Response.UpdateProductResponse;
-import com.codewithdondamzy.onlinestore.Models.CartItem;
 import com.codewithdondamzy.onlinestore.Models.Category;
 import com.codewithdondamzy.onlinestore.Models.Products;
-import com.codewithdondamzy.onlinestore.Models.Review;
 import com.codewithdondamzy.onlinestore.Repository.CategoryRepository;
 import com.codewithdondamzy.onlinestore.Repository.ProductRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class ProductServiceImpl implements ProductService {
@@ -74,21 +66,26 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public GetProductResponse getAllProducts() {
+    public GetProductResponse getAllProducts(Pageable pageable) {
         GetProductResponse getProductResponse = new GetProductResponse();
         try {
-            List<Products> existingProducts = productRepository.findAll();
-            if(existingProducts.isEmpty()) {
+            Page<Products> productsPage = productRepository.findAll(pageable);
+            List<Products> productsList = productsPage.getContent();
+            if(productsList.isEmpty()) {
                 getProductResponse.setStatusCode(400);
                 getProductResponse.setMessage("Products not available");
                 return getProductResponse;
             }
 
-            List<Products> productsToGet = new ArrayList<>(existingProducts);
-            productsToGet.sort((p1, p2) -> p1.getName().compareToIgnoreCase(p2.getName()));
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("content", productsList);
+            responseData.put("currentPage", productsPage.getNumber());
+            responseData.put("totalPages", productsPage.getTotalPages());
+            responseData.put("totalElements", productsPage.getTotalElements());
+            responseData.put("numberOfElements", productsPage.getNumberOfElements());
             getProductResponse.setStatusCode(200);
             getProductResponse.setMessage("Products found successfully");
-            getProductResponse.setData(productsToGet);
+            getProductResponse.setData(responseData);
             return getProductResponse;
         } catch (Exception e) {
             e.printStackTrace();
@@ -290,7 +287,28 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public GetProductResponse activateProduct() {
-        return null;
+    public GetProductResponse activateProduct(Long productId) {
+        GetProductResponse getProductResponse = new GetProductResponse();
+        try {
+            Optional<Products> products = productRepository.findById(productId);
+            if(products.isEmpty()) {
+                getProductResponse.setStatusCode(400);
+                getProductResponse.setMessage("Product with Id " + productId + " not found");
+                return getProductResponse;
+            }
+            Products productToGet = products.get();
+            productToGet.setAvailable(true);
+            productRepository.save(productToGet);
+
+            getProductResponse.setStatusCode(200);
+            getProductResponse.setMessage("Product found and activated successfully");
+            getProductResponse.setData(productToGet);
+            return getProductResponse;
+        }
+        catch(Exception e) {
+            getProductResponse.setStatusCode(500);
+            getProductResponse.setMessage("Invalid search!!");
+            return getProductResponse;
+        }
     }
 }

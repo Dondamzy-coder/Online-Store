@@ -1,20 +1,17 @@
-package com.codewithdondamzy.onlinestore.Service;
+package com.codewithdondamzy.onlinestore.service;
 
 import com.codewithdondamzy.onlinestore.Dtos.Request.CreateProductRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Response.CreateProductResponse;
 import com.codewithdondamzy.onlinestore.Dtos.Response.DeleteProductResponse;
 import com.codewithdondamzy.onlinestore.Dtos.Response.GetProductResponse;
 import com.codewithdondamzy.onlinestore.Dtos.Response.UpdateProductResponse;
-import com.codewithdondamzy.onlinestore.Models.Products;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
+import org.springframework.data.domain.Pageable;
 
 
 public interface ProductService {
     CreateProductResponse createProduct(CreateProductRequest createProductRequest);
 
-    GetProductResponse getAllProducts();
+    GetProductResponse getAllProducts(Pageable pageable);
 
     GetProductResponse getProductById(Long id);
 
@@ -34,6 +31,6 @@ public interface ProductService {
 
    UpdateProductResponse updateProductPrice(CreateProductRequest createProductRequest, Long id);
 
-   GetProductResponse activateProduct();
+   GetProductResponse activateProduct(Long productId);
 
 }

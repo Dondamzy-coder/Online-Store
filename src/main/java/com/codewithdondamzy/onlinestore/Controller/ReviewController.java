@@ -1,8 +1,7 @@
 package com.codewithdondamzy.onlinestore.Controller;
 
 import com.codewithdondamzy.onlinestore.Dtos.Request.ReviewRequest;
-import com.codewithdondamzy.onlinestore.Service.ReviewService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.codewithdondamzy.onlinestore.service.ReviewService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;

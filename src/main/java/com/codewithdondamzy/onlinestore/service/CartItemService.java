@@ -1,6 +1,5 @@
-package com.codewithdondamzy.onlinestore.Service;
+package com.codewithdondamzy.onlinestore.service;
 
-import com.codewithdondamzy.onlinestore.Dtos.Request.CartItemRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Response.CartItemResponse;
 
 public interface CartItemService {

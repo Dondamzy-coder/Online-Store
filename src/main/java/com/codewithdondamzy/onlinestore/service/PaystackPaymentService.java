@@ -1,4 +1,4 @@
-package com.codewithdondamzy.onlinestore.Service;
+package com.codewithdondamzy.onlinestore.service;
 
 import com.codewithdondamzy.onlinestore.Dtos.Request.PaymentRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Response.PaymentResponse;
@@ -119,8 +119,8 @@ public class PaystackPaymentService implements PaymentService {
             for (OrderItem orderItem : order1.getOrderItems()) {
                 Products products = orderItem.getProducts();
                 products.setInventory(products.getInventory() - orderItem.getQuantity());
-                order.get().setPaymentStatus(paymentResponse.getStatus());
                 productRepository.save(products);
+                order1.setPaymentStatus(paymentResponse.getStatus());
                 orderRepository.save(order1);
                 try {
                     emailService.sendPaymentConfirmation(order1.getCustomer().getEmail()

@@ -1,9 +1,6 @@
-package com.codewithdondamzy.onlinestore.Service;
+package com.codewithdondamzy.onlinestore.service;
 
 import com.codewithdondamzy.onlinestore.Dtos.Response.CartResponse;
-import com.codewithdondamzy.onlinestore.Models.Cart;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Service;
 
 public interface CartService {
 

@@ -2,8 +2,8 @@ package com.codewithdondamzy.onlinestore.Controller;
 
 import com.codewithdondamzy.onlinestore.Dtos.Request.PaymentRequest;
 import com.codewithdondamzy.onlinestore.Dtos.Response.PaymentResponse;
-import com.codewithdondamzy.onlinestore.Service.PaymentService;
-import com.codewithdondamzy.onlinestore.Service.PaystackPaymentService;
+import com.codewithdondamzy.onlinestore.service.PaymentService;
+import com.codewithdondamzy.onlinestore.service.PaystackPaymentService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,6 +23,7 @@ public class PaymentController {
     public ResponseEntity<?> initializePayment(@PathVariable Long orderId) {
         return ResponseEntity.ok(paymentService.initializePayment(orderId));
     }
+
 
     @GetMapping("/createPayment")
     public ResponseEntity<PaymentResponse> createPayment(@RequestBody PaymentRequest paymentRequest) {

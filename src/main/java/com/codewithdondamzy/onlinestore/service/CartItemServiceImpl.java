@@ -1,4 +1,4 @@
-package com.codewithdondamzy.onlinestore.Service;
+package com.codewithdondamzy.onlinestore.service;
 
 import com.codewithdondamzy.onlinestore.Dtos.Response.CartItemResponse;
 import com.codewithdondamzy.onlinestore.Models.Cart;
@@ -10,8 +10,6 @@ import com.codewithdondamzy.onlinestore.Repository.ProductRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
-
-import static org.springframework.data.jpa.domain.AbstractPersistable_.id;
 
 @Service
 public class CartItemServiceImpl implements CartItemService{

@@ -1,7 +1,6 @@
 package com.codewithdondamzy.onlinestore.Controller;
 
-import com.codewithdondamzy.onlinestore.Dtos.Request.CartItemRequest;
-import com.codewithdondamzy.onlinestore.Service.CartItemService;
+import com.codewithdondamzy.onlinestore.service.CartItemService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +27,7 @@ public class CartItemController {
     }
 
     @PreAuthorize("hasAuthority('CUSTOMER')")
-    @PutMapping("/updateCartItemQunatity/{cartId}/{productId}")
+    @PutMapping("/updateCartItemQuantity/{cartId}/{productId}")
     public ResponseEntity<?> updateCartItemQuantity(@PathVariable Long cartId, @PathVariable Long productId,@RequestParam Integer quantity) {
         return ResponseEntity.ok(cartItemService.updateCartItemQuantity(cartId, productId, quantity));
     }

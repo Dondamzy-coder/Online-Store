@@ -1,13 +1,9 @@
 package com.codewithdondamzy.onlinestore.Controller;
 
 import com.codewithdondamzy.onlinestore.Dtos.Request.AdminRequest;
-import com.codewithdondamzy.onlinestore.Dtos.Response.AdminResponse;
-import com.codewithdondamzy.onlinestore.Models.Admin;
-import com.codewithdondamzy.onlinestore.Service.AdminService;
+import com.codewithdondamzy.onlinestore.service.AdminService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/OnlineStore")
