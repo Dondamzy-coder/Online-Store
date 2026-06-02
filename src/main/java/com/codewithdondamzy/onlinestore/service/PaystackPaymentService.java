@@ -37,7 +37,7 @@ public class PaystackPaymentService implements PaymentService {
         this.emailService = emailService;
     }
 
-    // secret key from application.properties
+    // secret key from application-dev.properties
     @Value("${paystack.secret.key}")
     private String secretKey;
 
